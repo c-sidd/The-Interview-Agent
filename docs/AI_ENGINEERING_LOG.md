@@ -92,3 +92,42 @@ AI assistant drafted the `.gitignore` file structure, listing the standard exclu
 
 ### Git Commit
 `chore: initialize repository, add gitignore and project structure`
+
+---
+
+## Entry M05
+
+*   **Milestone**: `M05`
+*   **Date**: 2026-08-08
+*   **Time**: 13:05:00
+*   **Current Branch**: `main`
+
+### Problem
+Design and document the system's runtime architecture, request flows, session lifecycles, and folder layouts to align development.
+
+### Why This Problem Matters
+Without formal sequence and lifecycle designs, multi-developer teams can lose track of session states, route connections, and boundary systems. This leads to spaghetti code and integration issues.
+
+### Possible Approaches Considered
+1.  **Option A**: Write text-only architectural descriptions.
+2.  **Option B**: Create visual sequence charts, state diagrams, and detailed folder maps using standard markdown diagrams (Mermaid blocks).
+
+### Chosen Solution
+Option B: Created `docs/SYSTEM_ARCHITECTURE.md` to map out the request lifecycle, state machine, data flows, and directory hierarchies.
+
+### Why This Solution Was Selected
+Visual sequence diagrams provide a clear layout of the runtime environment that can be understood by developers and AI-based repository analysis tools alike.
+
+### AI Collaboration
+AI assistant drafted the Mermaid markup blocks for the sequence flow, session lifecycle states, and data paths.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Refined the request flow chart to guarantee that Turn 0 (Session initialization) returns a static welcome message immediately without querying Gemini, reducing latency.
+*   **Decisions Rejected**: Rejected adding complex vector search pathways since dynamic prompt context injection is selected.
+*   **Manual Refinements**: Adjusted database layout names and service labels to match the finalized folder structure.
+
+### Files Modified
+*   `docs/SYSTEM_ARCHITECTURE.md`
+
+### Git Commit
+`docs: outline system architecture, data flows, and folder layouts`
