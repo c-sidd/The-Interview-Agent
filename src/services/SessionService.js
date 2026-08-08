@@ -12,9 +12,11 @@ class SessionService {
       candidate,
       selectedDays,
       questionCount: 0,
+      attempts: 0,
+      followUps: 0,
+      status: "WAITING_FOR_ANSWER",
       history: [],
       currentDayIndex: 0,
-      currentDayTurn: 1,
       feedback: null,
       createdAt: now,
       lastActive: now

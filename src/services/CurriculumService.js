@@ -52,69 +52,67 @@ class CurriculumService {
    */
   selectTargetDays(candidate) {
     if (!candidate || !candidate.missions) {
-      return [7, 10, 22, 28]; // Default fallback core days
+      return [7, 8, 10, 11, 13, 22, 28, 31]; // Default fallback core 8 days
     }
 
     const selectedDaysSet = new Set();
     const missions = candidate.missions;
 
-    // 1. Select a skipped day
+    // 1. Select up to 2 skipped days
     const skippedMissions = missions.filter(m => m.skipped === true);
     if (skippedMissions.length > 0) {
-      const randomSkipped = skippedMissions[Math.floor(Math.random() * skippedMissions.length)];
-      selectedDaysSet.add(randomSkipped.day);
+      // Shuffle skipped
+      const shuffled = skippedMissions.sort(() => 0.5 - Math.random());
+      shuffled.slice(0, 2).forEach(m => selectedDaysSet.add(m.day));
     }
 
-    // 2. Select a struggled day (attempts > 1 OR passed === false)
+    // 2. Select up to 2 struggled days (attempts > 1 OR passed === false)
     const struggledMissions = missions.filter(m => 
       m.skipped !== true && (m.attempts > 1 || m.passed === false)
     );
     if (struggledMissions.length > 0) {
-      // Find one that doesn't duplicate
       const eligible = struggledMissions.filter(m => !selectedDaysSet.has(m.day));
-      if (eligible.length > 0) {
-        const randomStruggled = eligible[Math.floor(Math.random() * eligible.length)];
-        selectedDaysSet.add(randomStruggled.day);
-      }
+      const shuffled = eligible.sort(() => 0.5 - Math.random());
+      shuffled.slice(0, 2).forEach(m => selectedDaysSet.add(m.day));
     }
 
-    // 3. Select a strength day (passed === true and attempts === 1)
+    // 3. Select up to 2 strength days (passed === true and attempts === 1)
     const strengthMissions = missions.filter(m => 
       m.passed === true && m.attempts === 1
     );
     if (strengthMissions.length > 0) {
       const eligible = strengthMissions.filter(m => !selectedDaysSet.has(m.day));
-      if (eligible.length > 0) {
-        const randomStrength = eligible[Math.floor(Math.random() * eligible.length)];
-        selectedDaysSet.add(randomStrength.day);
-      }
+      const shuffled = eligible.sort(() => 0.5 - Math.random());
+      shuffled.slice(0, 2).forEach(m => selectedDaysSet.add(m.day));
     }
 
-    // 4. Select a core/capstone day (Day 7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31)
+    // 4. Select core/capstone days to fill up (Day 7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31)
     const coreDays = [7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31];
     const eligibleCore = coreDays.filter(day => !selectedDaysSet.has(day));
-    if (eligibleCore.length > 0) {
-      const randomCore = eligibleCore[Math.floor(Math.random() * eligibleCore.length)];
-      selectedDaysSet.add(randomCore);
+    const shuffledCore = eligibleCore.sort(() => 0.5 - Math.random());
+    let coreIndex = 0;
+    while (selectedDaysSet.size < 8 && coreIndex < shuffledCore.length) {
+      selectedDaysSet.add(shuffledCore[coreIndex]);
+      coreIndex++;
     }
 
-    // Fallback: If we don't have 4 unique days, fill from the candidate's completed days
+    // Fallback: If we don't have 8 unique days, fill from the candidate's completed days
     const allMissionsDays = missions.map(m => m.day);
     let index = 0;
-    while (selectedDaysSet.size < 4 && index < allMissionsDays.length) {
+    while (selectedDaysSet.size < 8 && index < allMissionsDays.length) {
       selectedDaysSet.add(allMissionsDays[index]);
       index++;
     }
 
-    // If still less than 4 (e.g. empty candidate profile), fill with generic core days
-    const genericBackups = [7, 8, 10, 12, 16, 22, 23, 28, 31];
+    // If still less than 8, fill with generic core days
+    const genericBackups = [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 28, 31];
     let backupIndex = 0;
-    while (selectedDaysSet.size < 4 && backupIndex < genericBackups.length) {
+    while (selectedDaysSet.size < 8 && backupIndex < genericBackups.length) {
       selectedDaysSet.add(genericBackups[backupIndex]);
       backupIndex++;
     }
 
-    return Array.from(selectedDaysSet).slice(0, 4);
+    return Array.from(selectedDaysSet).slice(0, 8);
   }
 }
 

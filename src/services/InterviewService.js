@@ -74,7 +74,14 @@ Let's begin.`;
       };
     }
 
-    const { questionCount, selectedDays, currentDayIndex, currentDayTurn, candidate } = session;
+    const { selectedDays, candidate } = session;
+    let { 
+      questionCount = 0, 
+      currentDayIndex = 0, 
+      attempts = 0, 
+      followUps = 0, 
+      status = "WAITING_FOR_ANSWER" 
+    } = session;
 
     // 1. Evaluate candidate's last response if they just answered a question
     let evaluation = null;
@@ -114,50 +121,86 @@ Let's begin.`;
           title: activeDayDetails.title,
           question: lastQuestion,
           answer: message,
-          evaluation: evaluation
+          evaluation: evaluation,
+          questionId: questionCount,
+          attempts: attempts + 1,
+          followUps: followUps,
+          statusBefore: status
         });
       }
     }
 
-    // Append the candidate's response to history
+    // Append user response to history
     if (message) {
       session.history.push({ role: "user", content: message });
     }
 
-    // Check if the candidate has completed all 8 questions (Turn 9)
-    if (questionCount >= 8) {
-      console.log(`[InterviewService] Interview complete for session ${sessionId}. Compiling final feedback report.`);
-      
-      // Call FeedbackService to compile structured report card, passing accumulated evaluations
-      const feedback = await this.feedbackService.generateFeedback(candidate, session.history, session.evaluations || []);
-      
-      // Update session state
-      this.sessionService.updateSession(sessionId, { feedback, evaluations: session.evaluations || [] });
+    // Determine the next state transition
+    let transitionToNextQuestion = false;
 
-      return {
-        reply: "Thank you. Your interview has concluded. We are compiling your feedback.",
-        done: true,
-        feedback
-      };
-    }
+    if (questionCount === 0) {
+      // Transitioning from welcome greeting to first question
+      questionCount = 1;
+      attempts = 0;
+      followUps = 0;
+      status = "WAITING_FOR_ANSWER";
+      currentDayIndex = 0;
+    } else if (evaluation) {
+      const classification = evaluation.classification || "Partially Correct";
 
-    // Otherwise, generate the next interview question (Turns 1 to 8)
-    let activeDayIndex = currentDayIndex;
-    let activeDayTurn = currentDayTurn;
-
-    // Determine target day and day turn transition
-    if (questionCount > 0) {
-      if (currentDayTurn === 1) {
-        // Ask follow-up question for same day
-        activeDayTurn = 2;
+      if (classification === "Off Topic") {
+        attempts += 1;
+        status = "RETRY";
+      } else if (classification === "Don't Know") {
+        if (status !== "HINT") {
+          attempts += 1;
+          status = "HINT";
+        } else {
+          transitionToNextQuestion = true;
+        }
+      } else if (classification === "Correct") {
+        transitionToNextQuestion = true;
       } else {
-        // Move to the next day in list
-        activeDayIndex = currentDayIndex + 1;
-        activeDayTurn = 1;
+        // Partially Correct or Incorrect
+        if (status !== "FOLLOW_UP") {
+          attempts += 1;
+          followUps += 1;
+          status = "FOLLOW_UP";
+        } else {
+          transitionToNextQuestion = true;
+        }
       }
     }
 
-    const targetDayObj = selectedDays[activeDayIndex];
+    if (transitionToNextQuestion) {
+      if (questionCount >= 8) {
+        console.log(`[InterviewService] Interview complete for session ${sessionId}. Compiling final feedback report.`);
+        const feedback = await this.feedbackService.generateFeedback(candidate, session.history, session.evaluations || []);
+        
+        this.sessionService.updateSession(sessionId, { 
+          feedback, 
+          evaluations: session.evaluations || [],
+          questionCount: 8,
+          status: "COMPLETED"
+        });
+
+        return {
+          reply: "Thank you. Your interview has concluded. We are compiling your feedback.",
+          done: true,
+          feedback,
+          mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
+        };
+      } else {
+        questionCount += 1;
+        currentDayIndex += 1;
+        attempts = 0;
+        followUps = 0;
+        status = "WAITING_FOR_ANSWER";
+      }
+    }
+
+    // Generate active day question
+    const targetDayObj = selectedDays[currentDayIndex];
     const targetDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
     const dayDetails = this.curriculumService.getDayDetails(targetDayNumber);
 
@@ -170,6 +213,8 @@ Let's begin.`;
 
     // Compile Prompt Context
     const systemPrompt = this.promptService.buildSystemPrompt(candidate);
+    const activeDayTurn = (status === "WAITING_FOR_ANSWER") ? 1 : 2;
+
     const questionPrompt = this.promptService.buildQuestionPrompt(
       targetDayNumber,
       dayDetails.title,
@@ -182,7 +227,7 @@ Let's begin.`;
     );
 
     // Call LLM Service
-    console.log(`[InterviewService] Generating question ${questionCount + 1} (Day ${targetDayNumber}, Turn ${activeDayTurn})`);
+    console.log(`[InterviewService] Generating question ${questionCount} (Day ${targetDayNumber}, Status: ${status}, Attempts: ${attempts}, Follow-ups: ${followUps})`);
     const questionResponse = await this.llmService.generateResponse(systemPrompt, questionPrompt);
 
     // Save turn to history
@@ -190,19 +235,24 @@ Let's begin.`;
 
     // Update session state
     this.sessionService.updateSession(sessionId, {
-      questionCount: questionCount + 1,
-      currentDayIndex: activeDayIndex,
-      currentDayTurn: activeDayTurn,
+      questionCount,
+      currentDayIndex,
+      attempts,
+      followUps,
+      status,
       evaluations: session.evaluations || []
     });
 
     return {
       reply: questionResponse,
       done: false,
-      questionCount: questionCount + 1,
+      questionCount,
       activeDay: targetDayNumber,
       activeDayTitle: dayDetails.title,
       evaluation: evaluation,
+      attempts,
+      followUps,
+      status,
       mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
     };
   }

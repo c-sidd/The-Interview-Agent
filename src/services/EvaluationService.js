@@ -44,6 +44,7 @@ Candidate's Response: "${candidateAnswer}"`;
 
     try {
       const responseText = await this.llmService.generateResponse(systemPrompt, userPrompt);
+      console.log(`[EvaluationService] Raw LLM Response: "${responseText}"`);
       const cleanJsonText = this.cleanJsonResponse(responseText);
       const evalResult = JSON.parse(cleanJsonText);
 
@@ -60,7 +61,7 @@ Candidate's Response: "${candidateAnswer}"`;
         acknowledgmentText: evalResult.acknowledgmentText || 'Acknowledged.'
       };
     } catch (err) {
-      console.error('[EvaluationService] Error running evaluation:', err);
+      console.error('[EvaluationService] Error running evaluation, falling back. Error:', err.message);
       // Safe fallback evaluation
       return this.getFallbackEvaluation(candidateAnswer);
     }

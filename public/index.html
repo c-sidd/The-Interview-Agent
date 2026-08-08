@@ -105,9 +105,21 @@
               <span class="label">Assessing topic:</span>
               <strong id="active-topic-day">Day 1 - Setup</strong>
             </div>
-            <div class="turn-tracker">
-              <span class="label">Questions Asked:</span>
-              <strong id="active-turn-count">0 / 8</strong>
+            <div class="turn-tracker" style="display: flex; flex-direction: column; align-items: flex-end;">
+              <div class="tracker-item">
+                <span class="label">Current Question:</span>
+                <strong id="active-turn-count">Question 1 of 8</strong>
+              </div>
+              <div class="tracker-sub-items" style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+                <div class="tracker-item" style="text-align: right;">
+                  <span class="label" style="font-size: 0.65rem; color: var(--text-muted);">Attempts:</span>
+                  <strong id="active-attempts-count" style="font-size: 0.8rem; color: #cbd5e1;">0</strong>
+                </div>
+                <div class="tracker-item" style="text-align: right;">
+                  <span class="label" style="font-size: 0.65rem; color: var(--text-muted);">Follow-ups:</span>
+                  <strong id="active-followups-count" style="font-size: 0.8rem; color: #cbd5e1;">0</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>

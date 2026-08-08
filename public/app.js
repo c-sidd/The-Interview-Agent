@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (done) {
         status = 'completed';
       } else {
-        const activeIndex = Math.min(Math.floor(questionCount / 2), 3);
+        const activeIndex = questionCount - 1;
         if (idx < activeIndex) {
           status = 'completed';
         } else if (idx === activeIndex) {
@@ -116,7 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activeNameLabel.textContent = candidate.member.name;
     activeRoleLabel.textContent = candidate.member.jobRole;
     activeTopicLabel.textContent = "Initialization";
-    activeTurnLabel.textContent = "0 / 8";
+    activeTurnLabel.textContent = "Question 1 of 8";
+    document.getElementById('active-attempts-count').textContent = "0";
+    document.getElementById('active-followups-count').textContent = "0";
 
     // Set Sidebar Details
     document.getElementById('sidebar-cand-name').textContent = candidate.member.name;
@@ -237,8 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update header & sidebar details
         if (data.questionCount !== undefined) {
-          activeTurnLabel.textContent = `${data.questionCount} / 8`;
+          activeTurnLabel.textContent = `Question ${data.questionCount} of 8`;
           updateSidebarProgress(data.questionCount, false);
+        }
+        if (data.attempts !== undefined) {
+          document.getElementById('active-attempts-count').textContent = data.attempts;
+        }
+        if (data.followUps !== undefined) {
+          document.getElementById('active-followups-count').textContent = data.followUps;
         }
         if (data.activeDay !== undefined && data.activeDayTitle !== undefined) {
           activeTopicLabel.textContent = `Day ${data.activeDay} - ${data.activeDayTitle}`;
