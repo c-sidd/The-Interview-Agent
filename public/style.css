@@ -245,7 +245,6 @@ body {
   border-radius: 1.25rem;
   height: 75vh;
   min-height: 500px;
-  display: none;
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
