@@ -505,3 +505,45 @@ Ran `node src/services/test_prompts.js` in the project root. Confirmed that sele
 
 ### Git Commit
 `test: add offline prompt simulation and validation test script`
+
+---
+
+## Entry M15
+
+*   **Milestone**: `M15`
+*   **Date**: 2026-08-08
+*   **Time**: 14:15:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the feedback parser and grading service responsible for invoking final evaluations, stripping Markdown fences, verifying structural keys, and mapping responses to JSON.
+
+### Why This Problem Matters
+The final turn of the interview requires returning a structured JSON feedback payload to the client. Because LLMs sometimes wrap JSON outputs in markdown fences (like `\`\`\`json ... \`\`\`) or include conversational text, a direct `JSON.parse` can fail, causing the server to crash.
+
+### Possible Approaches Considered
+1.  **Option A**: Run a simple `JSON.parse` directly on the raw text and return a 500 error if it fails.
+2.  **Option B**: Clean markdown block formatting, use regular expressions to locate the JSON block as a fallback, and enforce array schemas for safety.
+
+### Chosen Solution
+Option B: Created `src/services/FeedbackService.js` to process and sanitize LLM feedback responses.
+
+### Why This Solution Was Selected
+Provides a crash-proof parser that can handle raw LLM text and fall back to structured reports if necessary.
+
+### AI Collaboration
+AI assistant drafted the regex block filter and the basic schema validator keys check.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Added a schema validation wrapper that forces the fields `strengths`, `gaps`, and `next` to parse as array structures.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Configured a `getDefaultFeedback` method that returns a clean, realistic evaluation block if the parser fails.
+
+### Files Created
+*   `src/services/FeedbackService.js`
+
+### Verification & Testing
+Created a temporary test script (`test_feedback.js`) and verified that the service correctly strips markdown fences, catches parsing failures, and resolves default evaluations.
+
+### Git Commit
+`feat: implement feedback service for structured evaluation parsing`
