@@ -2,7 +2,7 @@
 // AI Interview Agent — Client Side Controller (app.js)
 // ==============================================================================
 
-let activeSessionId = null;
+let activeInterviewId = null;
 let activeCandidate = null;
 let currentDayTitle = "Initialization";
 
@@ -33,16 +33,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Buttons
   const restartBtn = document.getElementById('restart-btn');
+  const backToCandidatesBtn = document.getElementById('back-to-candidates-btn');
+
+  async function restoreSession(autoResume = true) {
+    const savedSessionId = localStorage.getItem('activeInterviewId');
+    if (!savedSessionId) {
+      if (autoResume) return loadCandidates();
+      return null;
+    }
+
+    try {
+      const res = await fetch(`/api/session/${savedSessionId}`);
+      if (!res.ok) {
+        localStorage.removeItem('activeInterviewId');
+        if (autoResume) return loadCandidates();
+        return null;
+      }
+
+      const data = await res.json();
+
+      if (!autoResume) {
+        return data; // just return the data for loadCandidates
+      }
+      activeInterviewId = data.interviewId || data.sessionId; // backwards compatibility reading if needed
+      activeCandidate = data.candidate;
+
+      if (data.done) {
+        showFeedback(data.feedback);
+        return;
+      }
+
+      // Re-hydrate UI
+      activeNameLabel.textContent = activeCandidate.member.name;
+      activeRoleLabel.textContent = activeCandidate.member.jobRole;
+      const isSenior = activeCandidate.member.yearsExperience >= 5;
+      document.getElementById('sidebar-obj-difficulty').textContent = isSenior ? 'Senior' : 'Junior';
+      document.getElementById('sidebar-obj-role').textContent = activeCandidate.member.jobRole;
+      document.getElementById('sidebar-cand-name').textContent = activeCandidate.member.name;
+      document.getElementById('sidebar-cand-role').textContent = activeCandidate.member.jobRole;
+      document.getElementById('sidebar-cand-exp').textContent = `${activeCandidate.member.yearsExperience} Years`;
+
+      activeTurnLabel.textContent = `Question ${data.questionCount || 1} of 8`;
+      if (data.activeDay && data.activeDayTitle) {
+        activeTopicLabel.textContent = `Day ${data.activeDay} - ${data.activeDayTitle}`;
+      }
+      document.getElementById('active-attempts-count').textContent = data.attempts || "0";
+      document.getElementById('active-followups-count').textContent = data.followUps || "0";
+
+      // Render topics
+      if (data.selectedDays) {
+        const topicsList = document.getElementById('sidebar-topics-list');
+        topicsList.innerHTML = '';
+        data.selectedDays.forEach((topic) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<span class="status-icon">•</span> Day ${topic.day}: ${topic.title}`;
+          topicsList.appendChild(li);
+        });
+      }
+
+      updateSidebarProgress(data.questionCount || 0, false);
+      if (data.skillMap) updateSkillMap(data.skillMap);
+      if (data.interviewerStatus) updateInterviewerStatus(data.interviewerStatus, data.statusDetail);
+
+      const diffEl = document.getElementById('sidebar-obj-current-diff');
+      if (diffEl && data.difficulty) diffEl.textContent = data.difficulty;
+
+      // Render chat history
+      chatMessages.innerHTML = '';
+      if (data.history) {
+        data.history.forEach(msg => {
+          appendMessage(msg.role === 'user' ? 'candidate' : 'interviewer', msg.content);
+        });
+      }
+
+      selectorView.classList.remove('active');
+      chatView.classList.add('active');
+
+    } catch (err) {
+      console.warn("Restore failed:", err);
+      localStorage.removeItem('activeInterviewId');
+      if (autoResume) loadCandidates();
+      return null;
+    }
+  }
 
   // 1. Fetch and render cohort candidates
   async function loadCandidates() {
     try {
+      const existingSession = await restoreSession(false);
+
       const response = await fetch('/api/candidates');
       if (!response.ok) throw new Error("Failed to load candidates lists.");
       const candidates = await response.ok ? await response.json() : [];
 
       candidatesGrid.innerHTML = '';
-      
+
       if (candidates.length === 0) {
         candidatesGrid.innerHTML = '<div class="loading-spinner">No candidates found in candidates.json</div>';
         return;
@@ -65,7 +150,39 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
-        card.addEventListener('click', () => startInterview(c));
+
+        if (existingSession && existingSession.candidate.member.name === c.member.name) {
+          card.innerHTML += `
+             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+               <div style="font-size: 13px; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">
+                 Progress: ${existingSession.questionCount || 0} / 8 questions
+               </div>
+               <button class="resume-btn" style="width: 100%; margin-bottom: 8px; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                 Resume Interview
+               </button>
+               <button class="reset-btn" style="width: 100%; padding: 8px; background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;">
+                 Start New Interview
+               </button>
+             </div>
+           `;
+
+          const resumeBtn = card.querySelector('.resume-btn');
+          const resetBtn = card.querySelector('.reset-btn');
+
+          resumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            restoreSession(true); // Fire auto-restore
+          });
+
+          resetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            localStorage.removeItem('activeInterviewId');
+            startInterview(c);
+          });
+        } else {
+          card.addEventListener('click', () => startInterview(c));
+        }
+
         candidatesGrid.appendChild(card);
       });
     } catch (err) {
@@ -101,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let icon = '•';
       if (status === 'completed') icon = '✓';
       else if (status === 'active') icon = '▶';
-      
+
       const iconSpan = li.querySelector('.status-icon');
       if (iconSpan) iconSpan.textContent = icon;
     });
@@ -110,8 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Start Interview (Initialize Session Turn 0)
   async function startInterview(candidate) {
     activeCandidate = candidate;
-    activeSessionId = 'session-' + Math.random().toString(36).substring(2, 9);
-    
+    activeInterviewId = 'interview-' + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem('activeInterviewId', activeInterviewId);
+
     // Set Header Info
     activeNameLabel.textContent = candidate.member.name;
     activeRoleLabel.textContent = candidate.member.jobRole;
@@ -133,6 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sidebar-obj-difficulty').textContent = isSenior ? 'Senior' : 'Junior';
     document.getElementById('sidebar-obj-role').textContent = candidate.member.jobRole;
 
+    const diffEl = document.getElementById('sidebar-obj-current-diff');
+    if (diffEl) diffEl.textContent = 'Intermediate';
+
     // Transition view
     selectorView.classList.remove('active');
     chatView.classList.add('active');
@@ -145,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: activeSessionId,
+          interviewId: activeInterviewId,
           candidate: candidate
         })
       });
@@ -206,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: activeSessionId,
+          interviewId: activeInterviewId,
           message: text
         })
       });
@@ -224,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.mockMode) {
         statusContainer.innerHTML = `<span class="status-badge mock">⚠️ Fallback Mode Active</span>`;
       } else {
-        statusContainer.innerHTML = `<span class="status-badge live">🟢 Gemini Connected</span>`;
+        statusContainer.innerHTML = `<span class="status-badge live">🟢 AI Connected</span>`;
       }
 
       if (data.done) {
@@ -236,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         // Render interviewer next question
         appendMessage('interviewer', data.reply);
-        
+
         // Update header & sidebar details
         if (data.questionCount !== undefined) {
           activeTurnLabel.textContent = `Question ${data.questionCount} of 8`;
@@ -251,6 +372,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.activeDay !== undefined && data.activeDayTitle !== undefined) {
           activeTopicLabel.textContent = `Day ${data.activeDay} - ${data.activeDayTitle}`;
         }
+        // Update interviewer status label
+        if (data.interviewerStatus) {
+          updateInterviewerStatus(data.interviewerStatus, data.statusDetail);
+        }
+        // Update live skill map
+        if (data.skillMap && data.skillMap.length > 0) {
+          updateSkillMap(data.skillMap);
+        }
+
+        const diffEl = document.getElementById('sidebar-obj-current-diff');
+        if (diffEl && data.difficulty) diffEl.textContent = data.difficulty;
+
+        removeTypingIndicator();
+        appendMessage('interviewer', data.reply);
       }
 
     } catch (err) {
@@ -268,6 +403,41 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
+  // Helper: Render the interviewer status indicator in the sidebar
+  function updateInterviewerStatus(label, detail) {
+    const section = document.getElementById('interviewer-status-section');
+    const labelEl = document.getElementById('interviewer-status-label');
+    const detailEl = document.getElementById('interviewer-status-detail');
+    if (!section || !labelEl) return;
+    labelEl.textContent = label || '';
+    detailEl.textContent = detail || '';
+    section.style.display = label ? 'block' : 'none';
+  }
+
+  // Helper: Render animated skill score bars in the sidebar
+  function updateSkillMap(skillMap) {
+    const section = document.getElementById('skill-map-section');
+    const barsEl = document.getElementById('skill-map-bars');
+    if (!section || !barsEl) return;
+    section.style.display = 'block';
+    barsEl.innerHTML = skillMap.map(s => {
+      const pct = Math.round(s.score);
+      const color = pct >= 75 ? 'var(--accent-success)'
+        : pct >= 50 ? 'var(--accent-glow)'
+          : 'var(--accent-warn)';
+      return `
+        <div class="skill-row">
+          <div class="skill-row-header">
+            <span class="skill-name">${s.skill}</span>
+            <span class="skill-score">${pct}</span>
+          </div>
+          <div class="skill-bar-track">
+            <div class="skill-bar-fill" style="width:${pct}%; background:${color};"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   // Helper: Show typing indicator
   function showTypingIndicator() {
     const indicator = document.createElement('div');
@@ -281,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     chatMessages.appendChild(indicator);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    
+
     // Disable inputs
     chatInput.disabled = true;
     sendBtn.disabled = true;
@@ -291,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function removeTypingIndicator() {
     const indicator = document.getElementById('typing-indicator-bubble');
     if (indicator) indicator.remove();
-    
+
     // Re-enable inputs
     chatInput.disabled = false;
     sendBtn.disabled = false;
@@ -338,16 +508,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. Restart Platform
-  restartBtn.addEventListener('click', () => {
+  // 5. Reset to Selector (shared helper used by both back button and restart button)
+  function resetToSelector(clearSession = false) {
+    if (clearSession) {
+      localStorage.removeItem('activeInterviewId');
+      activeInterviewId = null;
+    }
+    // Clear chat UI
+    chatMessages.innerHTML = '';
+    activeCandidate = null;
+    currentDayTitle = "Initialization";
+
+    // Reset header labels to defaults
+    activeNameLabel.textContent = 'Candidate Name';
+    activeRoleLabel.textContent = 'Senior Developer';
+    activeTopicLabel.textContent = 'Day 1 - Setup';
+    activeTurnLabel.textContent = 'Question 1 of 8';
+    document.getElementById('active-attempts-count').textContent = '0';
+    document.getElementById('active-followups-count').textContent = '0';
+
+    // Reset sidebar
+    document.getElementById('sidebar-progress-fill').style.width = '0%';
+    document.getElementById('sidebar-progress-label').textContent = '0 / 8 Questions';
+    document.getElementById('sidebar-topics-list').innerHTML =
+      '<li class="upcoming"><span class="status-icon">•</span> Loading topics...</li>';
+    document.getElementById('sidebar-connection-status').innerHTML =
+      '<span class="status-badge mock">Offline Fallback Mock</span>';
+
+    // Re-enable input (in case user navigates back mid-typing/loading)
+    chatInput.disabled = false;
+    sendBtn.disabled = false;
+    chatInput.value = '';
+
+    // Switch views
+    chatView.classList.remove('active');
     feedbackView.classList.remove('active');
     selectorView.classList.add('active');
-    chatMessages.innerHTML = '';
-    activeSessionId = null;
-    activeCandidate = null;
+
+    // Refresh candidate grid
     loadCandidates();
+  }
+
+  // Back button in chat header (does NOT clear the active session ID!)
+  backToCandidatesBtn.addEventListener('click', () => resetToSelector(false));
+
+  // Restart button in feedback view (DOES clear the active session ID to start fresh next time)
+  restartBtn.addEventListener('click', () => {
+    localStorage.removeItem('activeInterviewId');
+    resetToSelector(true);
   });
 
   // Initial Boot
-  loadCandidates();
+  restoreSession(true);
 });

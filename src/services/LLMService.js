@@ -5,7 +5,7 @@ class LLMService {
   constructor() {
     this.provider = process.env.LLM_PROVIDER || 'gemini';
     this.apiKey = this.provider === 'groq' ? (process.env.GROQ_API_KEY || '') : (process.env.GEMINI_API_KEY || '');
-    this.modelName = this.provider === 'groq' ? (process.env.GROQ_MODEL || 'llama3-8b-8192') : (process.env.GEMINI_MODEL || 'gemini-3.5-flash');
+    this.modelName = this.provider === 'groq' ? (process.env.GROQ_MODEL || 'qwen/qwen3.6-27b') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash');
     this.temperature = parseFloat(process.env.TEMPERATURE || '0.2');
     this.maxTokens = parseInt(process.env.MAX_TOKENS || '800');
     this.fallbackActive = false;
