@@ -547,3 +547,45 @@ Created a temporary test script (`test_feedback.js`) and verified that the servi
 
 ### Git Commit
 `feat: implement feedback service for structured evaluation parsing`
+
+---
+
+## Entry M16
+
+*   **Milestone**: `M16`
+*   **Date**: 2026-08-08
+*   **Time**: 14:19:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the core orchestrator service `src/services/InterviewService.js` that coordinates session state caching, candidate day selection, prompt compilation, LLM execution, and grading triggers.
+
+### Why This Problem Matters
+The Interview Service is the core coordination pipeline of the application. Keeping it decoupled from Express routing ensures that we can write automated simulation tests, run offline, and swap out endpoints without changing interview mechanics.
+
+### Possible Approaches Considered
+1.  **Option A**: Manage session loading, prompt construction, LLM requests, and evaluation triggers directly inside route handlers.
+2.  **Option B**: Build a unified coordinator service that exposes a single `handleRequest` interface for all turn-based requests.
+
+### Chosen Solution
+Option B: Implemented the `InterviewService` class as the centralized system coordinator.
+
+### Why This Solution Was Selected
+Provides a clean, modular structure where the API controller only serves as a thin wrapper.
+
+### AI Collaboration
+AI assistant drafted the dialogue turn state machine skeleton and transition logic checks.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured Turn 0 initialization to bypass LLM queries entirely, saving API cost and latency. The actual questioning loop begins on the candidate's first response (Turn 1).
+*   **Decisions Rejected**: Rejected saving dialog transcripts to local text logs to keep system file output footprint small.
+*   **Manual Refinements**: Enforced strict validation checks to return descriptive help instructions if active session lookups fail.
+
+### Files Created
+*   `src/services/InterviewService.js`
+
+### Verification & Testing
+Created a temporary test script (`test_interview.js`) running a complete 9-turn interview sequence from start to finish. Verified correct question count tracking, topic transitions, and final feedback generation.
+
+### Git Commit
+`feat: implement interview service coordinator module`
