@@ -23,7 +23,10 @@ class InterviewService {
       // Return welcome reply immediately without invoking LLM
       return {
         reply: "Welcome. Let's begin your interview.",
-        done: false
+        done: false,
+        questionCount: 0,
+        activeDay: targetDays[0],
+        activeDayTitle: "Initialization"
       };
     }
 
@@ -123,7 +126,10 @@ class InterviewService {
 
     return {
       reply: questionResponse,
-      done: false
+      done: false,
+      questionCount: questionCount + 1,
+      activeDay: targetDayNumber,
+      activeDayTitle: dayDetails.title
     };
   }
 }

@@ -12,4 +12,9 @@ router.post('/interview', (req, res) => {
   return controller.handleInterviewTurn(req, res);
 });
 
+router.get('/candidates', (req, res) => {
+  const curriculumService = req.app.get('curriculumService');
+  return res.status(200).json(curriculumService.getCandidates());
+});
+
 module.exports = router;
