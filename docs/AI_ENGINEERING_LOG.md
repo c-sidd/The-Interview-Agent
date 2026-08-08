@@ -716,3 +716,48 @@ Ensured the router imports compile cleanly and the server boots without module r
 
 ### Git Commit
 `feat: mount interview routes to Express application`
+
+---
+
+## Entry M20
+
+*   **Milestone**: `M20`
+*   **Date**: 2026-08-08
+*   **Time**: 14:31:00
+*   **Current Branch**: `main`
+
+### Problem
+Verify that the Express server boots cleanly, binds to the designated port, and handles incoming HTTP requests on `/api/health` and `/api/interview`.
+
+### Why This Problem Matters
+Unit tests mock individual service functions, but integration tests verify that the network routing interfaces, body parsing middleware, and controller variables map together correctly.
+
+### Possible Approaches Considered
+1.  **Option A**: Run the server and manually issue curl requests in a separate terminal.
+2.  **Option B**: Create an automated integration test script `test_api.js` that boots the server, makes HTTP requests using the native node `http` package, asserts status codes and response bodies, and closes the server.
+
+### Chosen Solution
+Option B: Created and executed the integration test script `test_api.js`.
+
+### Why This Solution Was Selected
+Provides a repeatable, self-contained test runner that cleans up after itself, preventing port binding locks.
+
+### AI Collaboration
+AI assistant drafted the HTTP client request wrappers for POST and GET requests.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the script to automatically close the Express listener via `server.close()` upon test completion to ensure the testing process terminates cleanly.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Added validation assertions that check the status code for missing request variables.
+
+### Files Created or Modified
+*   `test_api.js`
+
+### Verification & Testing
+Executed `node test_api.js`. The test successfully completed all asserts:
+*   `GET /api/health` responds with HTTP 200 OK.
+*   `POST /api/interview` (Turn 0 Initial) responds with HTTP 200 Welcome.
+*   `POST /api/interview` (Invalid payload) responds with HTTP 400 Bad Request.
+
+### Git Commit
+`test: implement server integration tests for health and initial turns`
