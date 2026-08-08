@@ -761,3 +761,49 @@ Executed `node test_api.js`. The test successfully completed all asserts:
 
 ### Git Commit
 `test: implement server integration tests for health and initial turns`
+
+---
+
+## Entry M21
+
+*   **Milestone**: `M21`
+*   **Date**: 2026-08-08
+*   **Time**: 14:34:00
+*   **Current Branch**: `main`
+
+### Problem
+Test the application's resilience to API edge cases (e.g., missing parameter structures, blank strings, non-existent session lookups, and prompt injection attempts) before starting frontend development.
+
+### Why This Problem Matters
+If the API endpoints fail to handle blank replies or non-existent session IDs, the server can crash or output raw errors, exposing vulnerabilities.
+
+### Possible Approaches Considered
+1.  **Option A**: Conduct manual prompt injection testing using tools like Postman.
+2.  **Option B**: Create an automated, scriptable edge-case runner `test_edge_cases.js` that tests specific payloads and asserts expected error fields.
+
+### Chosen Solution
+Option B: Created and executed the edge-case test suite `test_edge_cases.js`.
+
+### Why This Solution Was Selected
+Provides a repeatable verification method, verifying that the controller validations and service safety layers block injection threats.
+
+### AI Collaboration
+AI assistant drafted simulated prompt injection messages.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Assured that non-existent session lookups return a user-friendly instruction JSON payload rather than crashing the request controller.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Verified that empty strings (e.g., `"   "`) are caught, trimmed, and processed cleanly.
+
+### Files Created or Modified
+*   `test_edge_cases.js`
+
+### Verification & Testing
+Ran `node test_edge_cases.js`. The test successfully completed all asserts, verifying:
+*   Missing `sessionId` returns HTTP 400.
+*   Non-existent `sessionId` returns user-friendly help text.
+*   Blank messages are handled gracefully.
+*   Prompt injections do not alter the system prompt rules.
+
+### Git Commit
+`test: implement edge case and prompt injection test runner`
