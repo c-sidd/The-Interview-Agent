@@ -375,3 +375,49 @@ Created a temporary test script (`test_session.js`) to create, update, and manua
 
 ### Git Commit
 `feat: implement session service module for state caching`
+
+---
+
+## Entry M12
+
+*   **Milestone**: `M12`
+*   **Date**: 2026-08-08
+*   **Time**: 13:51:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the prompt engineering layer, separating the instructions for the system persona, curriculum-aligned questions, follow-up questions, and evaluation templates into segregated builders to support easy prompt evolution.
+
+### Why This Problem Matters
+A single monolithic prompt is difficult to scale, test, and tune. Dividing prompts into specialized classes allows the team to modify specific prompt instructions (e.g., tweaking the feedback JSON schema) without affecting system personas or dialogue handlers.
+
+### Possible Approaches Considered
+1.  **Option A**: Store all prompt strings inside the API controller or as global variables in a config file.
+2.  **Option B**: Build a modular prompt service that loads specialized builder classes (System, Interview, FollowUp, Feedback) dynamically.
+
+### Chosen Solution
+Option B: Created `src/services/PromptService.js` and the prompt builders inside `src/services/promptBuilders/` to handle specific stages of the interview.
+
+### Why This Solution Was Selected
+Maintains clean separation of concerns, keeps logic testable in isolation, and allows us to switch from System Prompt V1 to V2 quickly during the Live Steer Challenge.
+
+### AI Collaboration
+AI assistant helped generate the class skeletons and property mapping logic for the five classes.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured all prompt builders as stateless, static classes to eliminate instance overhead and ensure thread safety.
+*   **Decisions Rejected**: Rejected embedding LLM SDK execution code inside prompt builders, keeping them strictly focused on prompt composition.
+*   **Manual Refinements**: Configured the `FollowUpPromptBuilder` to format history turns clearly as "Interviewer" vs. "Candidate" dialogue records.
+
+### Files Created
+*   `src/services/PromptService.js`
+*   `src/services/promptBuilders/SystemPromptBuilder.js`
+*   `src/services/promptBuilders/InterviewPromptBuilder.js`
+*   `src/services/promptBuilders/FollowUpPromptBuilder.js`
+*   `src/services/promptBuilders/FeedbackPromptBuilder.js`
+
+### Verification & Testing
+Created a temporary test script (`test_prompt.js`) to compile prompts for turn 1, turn 2, and the final grading turn. Confirmed candidate and curriculum properties are mapped correctly.
+
+### Git Commit
+`feat: implement segregated prompt service and builder sub-classes`
