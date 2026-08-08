@@ -333,3 +333,45 @@ Created a temporary test harness (`test_curriculum.js`) to load profiles and ver
 
 ### Git Commit
 `feat: implement curriculum service module`
+
+---
+
+## Entry M11
+
+*   **Milestone**: `M11`
+*   **Date**: 2026-08-08
+*   **Time**: 13:34:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the session state caching layer to store active interview states (history, counts, selected days) dynamically and clean up expired records to prevent memory leaks.
+
+### Why This Problem Matters
+HTTP transactions are stateless. We must cache conversational records in memory matching the provided `sessionId`. A garbage collector is required to release memory once candidate interviews complete or sessions become inactive.
+
+### Possible Approaches Considered
+1.  **Option A**: Save session files to a local database (e.g. SQLite).
+2.  **Option B**: Store session objects in an in-memory Map structure, using a periodic garbage-collection check.
+
+### Chosen Solution
+Option B: Created `src/services/SessionService.js` using an in-memory Map and configuring a background `setInterval` interval cleaner.
+
+### Why This Solution Was Selected
+In-memory Maps are fast, require no database installation, and reduce request latency.
+
+### AI Collaboration
+AI assistant drafted the CRUD operations on the Map structure and the standard interval function template.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured `unref()` on the background interval timer to prevent it from holding the Node.js process open if the server is shutting down.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Exposed a manual `cleanupExpired()` helper to make automated validation tests reliable without waiting for the 5-minute interval trigger.
+
+### Files Created
+*   `src/services/SessionService.js`
+
+### Verification & Testing
+Created a temporary test script (`test_session.js`) to create, update, and manually expire sessions. Verified that garbage collection successfully clears records.
+
+### Git Commit
+`feat: implement session service module for state caching`
