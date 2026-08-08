@@ -589,3 +589,45 @@ Created a temporary test script (`test_interview.js`) running a complete 9-turn 
 
 ### Git Commit
 `feat: implement interview service coordinator module`
+
+---
+
+## Entry M17
+
+*   **Milestone**: `M17`
+*   **Date**: 2026-08-08
+*   **Time**: 14:22:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the server entry point loader responsible for booting Express, configuring security and parsing middlewares, and loading environmental configurations.
+
+### Why This Problem Matters
+The application requires a listener layer to parse client requests, serve static assets (like CSS and JavaScript pages), and map API calls. 
+
+### Possible Approaches Considered
+1.  **Option A**: Launch routes and services from separate scripts.
+2.  **Option B**: Create a single application loader `server.js` that handles config parsing, service instantiation, middleware integration, and listener boots.
+
+### Chosen Solution
+Option B: Programmed the application entry point in `server.js`.
+
+### Why This Solution Was Selected
+Provides a consolidated layout where the server lifecycle is managed in one file.
+
+### AI Collaboration
+AI assistant drafted the Express middleware settings, CORS integration, and server logging format.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Attached service singletons directly to the Express context via `app.set('interviewService', ...)` to avoid namespace pollution and share class instances with controllers.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Configured a `/api/health` status route to allow automated deployment checks to verify the server state.
+
+### Files Created
+*   `server.js`
+
+### Verification & Testing
+Ensured that the file executes without syntax or load errors. Final testing will be conducted once routes are mounted.
+
+### Git Commit
+`feat: configure express server and service initializations`
