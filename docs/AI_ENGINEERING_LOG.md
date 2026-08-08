@@ -855,3 +855,46 @@ Launched the local Express server in the background and spawned a headless brows
 
 ### Git Commit
 `feat: implement modern frontend SPA client and static assets`
+
+---
+
+## Entry M31-M33
+
+*   **Milestone**: `M31-M33`
+*   **Date**: 2026-08-08
+*   **Time**: 14:50:00
+*   **Current Branch**: `main`
+
+### Problem
+Build consistent containerized packaging profiles and local script orchestration mechanisms to ensure the application starts up reliably on remote systems.
+
+### Why This Problem Matters
+Hackathon judges clone codebases on unknown machine environments, which can lead to runtime and dependency conflicts. Containerization packages the entire platform (Node environment, libraries, and assets) into a single standard container.
+
+### Possible Approaches Considered
+1.  **Option A**: Request judges install Node.js v20+, npm install, and boot manual server processes.
+2.  **Option B**: Provide a Docker configuration file and compose runner to build and spin up the server environment automatically.
+
+### Chosen Solution
+Option B: Created `Dockerfile` and `docker-compose.yml` to support local containerization.
+
+### Why This Solution Was Selected
+Containerization guarantees that the app starts up identically on the judges' devices as it did during development.
+
+### AI Collaboration
+AI assistant drafted standard node-alpine Docker instructions.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Utilized `node:20-alpine` as a base image to keep the image footprint light (~120MB) and secure. Configured package caching by copying package manifests before the rest of the source files.
+*   **Decisions Rejected**: Rejected embedding API keys directly in the image, instead mounting them from the host's `.env` file at container runtime.
+*   **Manual Refinements**: Exposed default environment settings to default to production modes.
+
+### Files Created or Modified
+*   `Dockerfile`
+*   `docker-compose.yml`
+
+### Verification & Testing
+Validated that the Docker config maps the static Express server files and binds port 3000 cleanly.
+
+### Git Commit
+`chore: add Dockerfile and docker-compose deployment configuration`
