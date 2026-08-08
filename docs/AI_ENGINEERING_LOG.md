@@ -131,3 +131,42 @@ AI assistant drafted the Mermaid markup blocks for the sequence flow, session li
 
 ### Git Commit
 `docs: outline system architecture, data flows, and folder layouts`
+
+---
+
+## Entry M06
+
+*   **Milestone**: `M06`
+*   **Date**: 2026-08-08
+*   **Time**: 13:08:00
+*   **Current Branch**: `main`
+
+### Problem
+Establish the design specifications of the core Interview Engine, including request processing pipelines, state updates, LLM calling procedures, and service layers.
+
+### Why This Problem Matters
+The Interview Engine is the core intelligence of the application. Having a clear plan for how requests are coordinated prevents business logic from leaking into API routes, ensuring the codebase is modular.
+
+### Possible Approaches Considered
+1.  **Option A**: Integrate all coordination inside a monolithic Express router handler.
+2.  **Option B**: Decouple routing, prompt generation, LLM calls, and state management into a clean Controller-Service architecture.
+
+### Chosen Solution
+Option B: Created `docs/INTERVIEW_ENGINE_DESIGN.md` to define the modular architecture, pipeline coordinates, and service responsibilities.
+
+### Why This Solution Was Selected
+Provides a future-proof, decoupled layer that is easy to extend. This structure prepares the team to handle fast feature requests during the 20-minute Live Steer Challenge.
+
+### AI Collaboration
+AI assistant helped structure the pipeline steps and outline the service boundaries (Curriculum, Session, LLM, Prompt, and Feedback services).
+
+### Human Engineering Decisions
+*   **Decisions Made**: Segregated the `PromptService` into four specific prompt builders (System, Interview, FollowUp, Feedback) instead of a single builder class.
+*   **Decisions Rejected**: Rejected placing state persistence logic inside the controller.
+*   **Manual Refinements**: Refined the method signatures for `InterviewService.handleRequest` to handle session initialization and dialog turns cleanly.
+
+### Files Modified
+*   `docs/INTERVIEW_ENGINE_DESIGN.md`
+
+### Git Commit
+`docs: design interview engine request processing pipeline`
