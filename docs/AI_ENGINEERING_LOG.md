@@ -898,3 +898,45 @@ Validated that the Docker config maps the static Express server files and binds 
 
 ### Git Commit
 `chore: add Dockerfile and docker-compose deployment configuration`
+
+---
+
+## Entry M34-M35
+
+*   **Milestone**: `M34-M35`
+*   **Date**: 2026-08-08
+*   **Time**: 14:55:00
+*   **Current Branch**: `main`
+
+### Problem
+Clean the repository, confirm no temporary files remain in the workspace, and provide clear user-facing documentation for setup, testing, and deployment.
+
+### Why This Problem Matters
+Clear documentation is a key criterion for hackathon evaluations. It allows judges to quickly configure, test, and run the project. A clean codebase prevents version conflicts and clutter.
+
+### Possible Approaches Considered
+1.  **Option A**: Write a brief readme detailing only start commands.
+2.  **Option B**: Create a comprehensive `README.md` mapping out key features, system layouts, setups, and separate commands for testing, offline simulations, and Docker deployments.
+
+### Chosen Solution
+Option B: Created a detailed `README.md` at the root of the project.
+
+### Why This Solution Was Selected
+Provides a professional, comprehensive guide for judges and automated evaluators to understand the codebase structure and verify all integration layers.
+
+### AI Collaboration
+AI assistant helped structure the Markdown styling headings and details.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Listed specific testing commands (offline prompt runs, REST integration runs, and edge-case safety runs) separately to highlight the application's test coverage.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Verified all folder structure paths in the file layout map match the final project folders.
+
+### Files Created or Modified
+*   `README.md`
+
+### Verification & Testing
+Confirmed that the working tree is clean and `README.md` links to the developer journal.
+
+### Git Commit
+`docs: compile final README overview and release cleanups`
