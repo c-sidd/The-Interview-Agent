@@ -209,3 +209,42 @@ AI assistant drafted the state model properties and formatted the transition tab
 
 ### Git Commit
 `docs: specify session schema and state structures`
+
+---
+
+## Entry M08
+
+*   **Milestone**: `M08`
+*   **Date**: 2026-08-08
+*   **Time**: 13:13:00
+*   **Current Branch**: `main`
+
+### Problem
+Design the LLM prompt instructions for the system persona, topic-specific initial questions, and context-aware follow-ups to ensure the interviewer acts consistently.
+
+### Why This Problem Matters
+Without strict boundaries, LLMs tend to drift (e.g., repeating the same question, agreeing with wrong answers, or breaking character under prompt injection). Establishing base prompts early defines the system's logic.
+
+### Possible Approaches Considered
+1.  **Option A**: Use a single monolithic prompt describing all curriculum days and rules.
+2.  **Option B**: Segregate the prompting engine into dedicated templates (System, Interview, and FollowUp prompt builders) loaded dynamically by a coordinator service.
+
+### Chosen Solution
+Option B: Created `docs/PROMPT_DESIGNS.md` to specify the baseline prompt layouts for System, Interview, and FollowUp builders.
+
+### Why This Solution Was Selected
+Segregated prompt builders keep prompt templates small, readable, and easy to optimize in isolation.
+
+### AI Collaboration
+AI assistant drafted the templates and helped formalize the variables (`candidateRole`, `commitDays`, etc.) to match the candidate JSON files.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Explicitly banned standard conversational praise (like "Great job!", "Correct!") in the system guidelines to keep the interviewer objective and professional.
+*   **Decisions Rejected**: Rejected letting the LLM decide which day to assess, keeping day selection controlled by the backend code.
+*   **Manual Refinements**: Refined the Follow-up Prompt template to force the LLM to address vague or incomplete answers before transitioning topics.
+
+### Files Modified
+*   `docs/PROMPT_DESIGNS.md`
+
+### Git Commit
+`docs: design segregated prompt templates for system, interview, and follow-ups`
