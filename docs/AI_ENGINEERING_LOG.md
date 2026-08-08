@@ -940,3 +940,48 @@ Confirmed that the working tree is clean and `README.md` links to the developer 
 
 ### Git Commit
 `docs: compile final README overview and release cleanups`
+
+---
+
+## Entry M36
+
+*   **Milestone**: `M36`
+*   **Date**: 2026-08-08
+*   **Time**: 15:00:00
+*   **Current Branch**: `main`
+
+### Problem
+Conduct a final audit of the codebase, execute all automated regression test suites, verify local paths, and confirm the project is ready for submission.
+
+### Why This Problem Matters
+Milestone 36 is the final validation gate. Running all tests back-to-back verifies that no regressions were introduced during frontend integrations or Docker setups.
+
+### Possible Approaches Considered
+1.  **Option A**: Manually check files and submit.
+2.  **Option B**: Execute the entire testing pipeline (prompts simulation, REST integration tests, and edge-case safety tests) in sequence to verify code correctness.
+
+### Chosen Solution
+Option B: Programmatically executed all three verification scripts.
+
+### Why This Solution Was Selected
+Provides a final quality gate, ensuring all components operate together.
+
+### AI Collaboration
+AI assistant helped run and monitor the final verification process.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Checked all documentation links to ensure relative pathing is preserved. Verified the git tree contains only tracked, finalized files.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Verified the formatting of the generated evaluation schema.
+
+### Files Created or Modified
+*   None.
+
+### Verification & Testing
+Ran `node src/services/test_prompts.js; node test_api.js; node test_edge_cases.js`.
+*   All prompt compilation variables resolved.
+*   GET health and POST dialogue API endpoints returned correct payloads.
+*   Input validation and prompt injection defenses successfully blocked threat simulations.
+
+### Git Commit
+`chore: complete final milestone and mark repository as submission ready`
