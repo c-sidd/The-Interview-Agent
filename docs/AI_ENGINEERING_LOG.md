@@ -631,3 +631,45 @@ Ensured that the file executes without syntax or load errors. Final testing will
 
 ### Git Commit
 `feat: configure express server and service initializations`
+
+---
+
+## Entry M18
+
+*   **Milestone**: `M18`
+*   **Date**: 2026-08-08
+*   **Time**: 14:25:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the HTTP router handler to validate payload schemas, parse body properties, clean variables, and delegate traffic to the InterviewService.
+
+### Why This Problem Matters
+API endpoints are vulnerable to invalid structures, missing variables, and garbage payloads. Enforcing boundaries at the entry layer protects downstream AI services from execution failures and runtime crashes.
+
+### Possible Approaches Considered
+1.  **Option A**: Forward request body directly to the services and capture thrown exceptions.
+2.  **Option B**: Validate the parameters (checking types, formats, and required inputs) in a dedicated controller layer before calling any services.
+
+### Chosen Solution
+Option B: Created `src/controllers/InterviewController.js` to serve as a sanitizing layer.
+
+### Why This Solution Was Selected
+Validating requests early allows the system to return immediate HTTP 400 Bad Request status codes for missing variables, saving server CPU cycles.
+
+### AI Collaboration
+AI assistant drafted the controller class skeleton and the standard try/catch request handling pattern.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Added a check requiring at least one of `candidate` (for Turn 0 initialization) or `message` (for conversational turns) to be present.
+*   **Decisions Rejected**: Rejected incorporating regex validators for candidate names to keep the validation simple and fast.
+*   **Manual Refinements**: Trimmed whitespace from strings like `sessionId` and `message` to clean up incoming payloads.
+
+### Files Created
+*   `src/controllers/InterviewController.js`
+
+### Verification & Testing
+Validated that the controller handles missing session IDs and returns appropriate status codes. Full integration testing will be run once the route is mounted.
+
+### Git Commit
+`feat: implement interview controller with input validation`
