@@ -17,4 +17,10 @@ router.get('/candidates', (req, res) => {
   return res.status(200).json(curriculumService.getCandidates());
 });
 
+router.get('/session/:sessionId', (req, res) => {
+  const interviewService = req.app.get('interviewService');
+  const controller = new InterviewController(interviewService);
+  return controller.getSessionState(req, res);
+});
+
 module.exports = router;

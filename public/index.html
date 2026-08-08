@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
   <!-- Modern Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <!-- Background Decorative Orbs -->
   <div class="orb orb-1"></div>
@@ -19,9 +23,12 @@
     <div class="header-content">
       <div class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
         <span>AI Interview Agent</span>
       </div>
@@ -64,8 +71,9 @@
             <span id="sidebar-obj-role" class="obj-val">AI Engineer</span>
           </div>
           <div class="objective-item">
-            <span class="obj-label">Est. Time:</span>
-            <span class="obj-val">12–15 Minutes</span>
+            <span class="obj-label">Current Diff:</span>
+            <span id="sidebar-obj-current-diff" class="obj-val"
+              style="color: var(--accent); font-weight: 500; text-transform: capitalize;">Intermediate</span>
           </div>
         </div>
 
@@ -85,7 +93,22 @@
           </ul>
         </div>
 
-        <div class="sidebar-status-section" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+        <!-- ── Interviewer Status ── -->
+        <div id="interviewer-status-section" class="sidebar-status-indicator" style="display:none;">
+          <div id="interviewer-status-label" class="status-indicator-label"></div>
+          <div id="interviewer-status-detail" class="status-indicator-detail"></div>
+        </div>
+
+        <!-- ── Live Skill Map ── -->
+        <div id="skill-map-section" class="sidebar-skill-map" style="display:none;">
+          <h4>Live Skill Map</h4>
+          <div id="skill-map-bars" class="skill-map-bars">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="sidebar-status-section"
+          style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05);">
           <h4>Connection Status</h4>
           <div id="sidebar-connection-status">
             <span class="status-badge mock">Offline Fallback Mock</span>
@@ -96,9 +119,18 @@
       <!-- Right Main Chat Area -->
       <div class="chat-main-area">
         <div class="chat-header">
-          <div class="candidate-meta">
-            <h2 id="active-candidate-name">Candidate Name</h2>
-            <span id="active-candidate-role" class="candidate-role-badge">Senior Developer</span>
+          <div class="chat-header-left">
+            <button id="back-to-candidates-btn" class="back-btn" title="Back to Candidates">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span class="back-btn-label">Candidates</span>
+            </button>
+            <div class="candidate-meta">
+              <h2 id="active-candidate-name">Candidate Name</h2>
+              <span id="active-candidate-role" class="candidate-role-badge">Senior Developer</span>
+            </div>
           </div>
           <div class="progress-container">
             <div class="day-details">
@@ -133,7 +165,8 @@
             <input type="text" id="chat-input" placeholder="Type your response..." autocomplete="off" required>
             <button type="submit" id="send-btn" class="send-btn">
               <span>Send</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
@@ -147,7 +180,8 @@
     <section id="feedback-view" class="view-panel">
       <div class="view-header">
         <div class="completion-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
             <polyline points="22 4 12 14.01 9 11.01"></polyline>
           </svg>
@@ -223,4 +257,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

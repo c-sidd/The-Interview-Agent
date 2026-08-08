@@ -5,10 +5,10 @@ class SessionService {
     this.startCleanupInterval();
   }
 
-  createSession(sessionId, candidate, selectedDays) {
+  createSession(interviewId, candidate, selectedDays) {
     const now = Date.now();
     const sessionState = {
-      sessionId,
+      interviewId,
       candidate,
       selectedDays,
       questionCount: 0,
@@ -19,14 +19,29 @@ class SessionService {
       currentDayIndex: 0,
       feedback: null,
       createdAt: now,
-      lastActive: now
+      lastActive: now,
+      // Evidence graph — populated by MemoryService after every answer
+      evidenceGraph: {
+        claims: [],   // All claims extracted from candidate answers
+        skills: {},   // { skillName: { skill, score, confidence, evidence[], questionsAssessed[] } }
+        misconceptions: [],   // Detected misunderstandings
+        contradictions: []    // Detected conflicts between earlier and later claims
+      },
+      // Adaptive interview state
+      interviewState: {
+        lastStrategy: null, // Most recent strategy object from MemoryService
+        interviewerStatus: null, // Short label surfaced to the candidate
+        statusDetail: null,  // One-sentence explanation
+        difficulty: 'intermediate',
+        difficultyChanges: []
+      }
     };
-    this.sessions.set(sessionId, sessionState);
+    this.sessions.set(interviewId, sessionState);
     return sessionState;
   }
 
-  getSession(sessionId) {
-    const session = this.sessions.get(sessionId);
+  getSession(interviewId) {
+    const session = this.sessions.get(interviewId);
     if (session) {
       session.lastActive = Date.now(); // Update active timestamp
       return session;
@@ -34,8 +49,8 @@ class SessionService {
     return null;
   }
 
-  updateSession(sessionId, updates) {
-    const session = this.sessions.get(sessionId);
+  updateSession(interviewId, updates) {
+    const session = this.sessions.get(interviewId);
     if (session) {
       Object.assign(session, updates);
       session.lastActive = Date.now();
@@ -44,12 +59,12 @@ class SessionService {
     return null;
   }
 
-  deleteSession(sessionId) {
-    return this.sessions.delete(sessionId);
+  deleteSession(interviewId) {
+    return this.sessions.delete(interviewId);
   }
 
-  hasSession(sessionId) {
-    return this.sessions.has(sessionId);
+  hasSession(interviewId) {
+    return this.sessions.has(interviewId);
   }
 
   /**
@@ -58,14 +73,14 @@ class SessionService {
   startCleanupInterval() {
     this.cleanupIntervalId = setInterval(() => {
       const now = Date.now();
-      for (const [sessionId, session] of this.sessions.entries()) {
+      for (const [interviewId, session] of this.sessions.entries()) {
         if (now - session.lastActive > this.timeoutLimitMs) {
-          console.log(`[SessionService] Garbage Collection: Deleting expired session ${sessionId}`);
-          this.sessions.delete(sessionId);
+          console.log(`[SessionService] Garbage Collection: Deleting expired session ${interviewId}`);
+          this.sessions.delete(interviewId);
         }
       }
     }, 5 * 60 * 1000); // Run sweep every 5 minutes
-    
+
     // Allow process to exit cleanly if this is the only active handle
     if (this.cleanupIntervalId && typeof this.cleanupIntervalId.unref === 'function') {
       this.cleanupIntervalId.unref();
@@ -78,9 +93,9 @@ class SessionService {
   cleanupExpired() {
     const now = Date.now();
     let count = 0;
-    for (const [sessionId, session] of this.sessions.entries()) {
+    for (const [interviewId, session] of this.sessions.entries()) {
       if (now - session.lastActive > this.timeoutLimitMs) {
-        this.sessions.delete(sessionId);
+        this.sessions.delete(interviewId);
         count++;
       }
     }

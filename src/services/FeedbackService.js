@@ -8,17 +8,17 @@ class FeedbackService {
    * Compiles the dialogue history, queries the LLM for evaluation,
    * strips any markdown fences, parses JSON, and performs schema validation.
    */
-  async generateFeedback(candidate, dialogueHistory, evaluations = []) {
+  async generateFeedback(candidate, dialogueHistory, evaluations = [], evidenceGraph = null) {
     if (!candidate) {
       throw new Error('[FeedbackService] Candidate profile is required for feedback generation.');
     }
     if (!dialogueHistory || dialogueHistory.length === 0) {
-      return this.getDefaultFeedback("No dialogue history provided.");
+      return this.getDefaultFeedback('No dialogue history provided.');
     }
 
     try {
-      // 1. Build prompt
-      const prompt = this.promptService.buildFeedbackPrompt(candidate, dialogueHistory, evaluations);
+      // 1. Build prompt (pass evidenceGraph for enriched feedback)
+      const prompt = this.promptService.buildFeedbackPrompt(candidate, dialogueHistory, evaluations, evidenceGraph);
 
       // 2. Query LLM (using the evaluator instruction system prompt)
       const systemInstruction = "You are a Senior Technical Evaluator. Output ONLY a valid JSON object matching the requested schema. Do not output markdown code fences or conversational text.";
@@ -96,6 +96,8 @@ class FeedbackService {
     if (!Array.isArray(parsed.strengths)) parsed.strengths = [parsed.strengths];
     if (!Array.isArray(parsed.gaps)) parsed.gaps = [parsed.gaps];
     if (!Array.isArray(parsed.next)) parsed.next = [parsed.next];
+    if (!Array.isArray(parsed.misconceptions)) parsed.misconceptions = parsed.misconceptions ? [parsed.misconceptions] : [];
+    if (!Array.isArray(parsed.contradictions)) parsed.contradictions = parsed.contradictions ? [parsed.contradictions] : [];
 
     return parsed;
   }

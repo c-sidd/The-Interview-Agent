@@ -1,4 +1,5 @@
 const EvaluationService = require('./EvaluationService');
+const MemoryService = require('./MemoryService');
 
 class InterviewService {
   constructor(sessionService, curriculumService, promptService, llmService, feedbackService) {
@@ -8,101 +9,77 @@ class InterviewService {
     this.llmService = llmService;
     this.feedbackService = feedbackService;
     this.evaluationService = new EvaluationService();
+    this.memoryService = new MemoryService();
   }
 
   /**
    * Main entry point for processing incoming interview requests.
-   * Handles Turn 0 (Session Initialization) and Turns 1 to 9 (Dialogue Loop & Evaluation).
+   * Handles Turn 0 (Session Initialization) and Turns 1–8 (Dialogue Loop).
    */
-  async handleRequest(sessionId, message, candidateInput) {
-    // 1. Session Initialization (Turn 0)
-    if (candidateInput) {
-      // Programmatically select 4 unique curriculum days
-      const targetDays = this.curriculumService.selectTargetDays(candidateInput);
-      
-      // Save state to SessionService
-      this.sessionService.createSession(sessionId, candidateInput, targetDays);
+  async handleRequest(interviewId, message, candidateInput) {
 
-      // Programmatically build a personalized welcome message based on candidate signals
+    // ── Turn 0: Session Initialization ───────────────────────────────────────
+    if (candidateInput) {
+      const targetDays = this.curriculumService.selectTargetDays(candidateInput);
+      this.sessionService.createSession(interviewId, candidateInput, targetDays);
+
       const firstName = candidateInput.member.name.split(' ')[0];
       const jobRole = candidateInput.member.jobRole;
       const missionsCompleted = candidateInput.signals ? candidateInput.signals.missionsCompleted : 0;
-      
+
       const selectedTopics = targetDays.map(dayNum => {
         const details = this.curriculumService.getDayDetails(dayNum);
-        return {
-          day: dayNum,
-          title: details ? details.title : `Day ${dayNum}`
-        };
+        return { day: dayNum, title: details ? details.title : `Day ${dayNum}` };
       });
 
       const topicTitlesText = selectedTopics.map(t => `${t.title} (Day ${t.day})`);
       const topicsText = topicTitlesText.slice(0, -1).join(', ') + ', and ' + topicTitlesText.slice(-1);
 
-      const personalizedWelcome = `Welcome ${firstName}. I have reviewed your learning profile for the ${jobRole} target track. You completed ${missionsCompleted} curriculum missions with strong performance.
-
-Today, I would like to evaluate your understanding of: ${topicsText}.
-
-Let's begin.`;
+      const personalizedWelcome =
+        `Welcome ${firstName}. I have reviewed your learning profile for the ${jobRole} target track. ` +
+        `You completed ${missionsCompleted} curriculum missions with strong performance.\n\n` +
+        `Today, I would like to evaluate your understanding of: ${topicsText}.\n\nLet's begin.`;
 
       return {
         reply: personalizedWelcome,
         done: false,
         questionCount: 0,
         activeDay: targetDays[0],
-        activeDayTitle: "Initialization",
+        activeDayTitle: 'Initialization',
         selectedDays: selectedTopics,
         mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
       };
     }
 
-    // 2. dialogue loops (Turns 1 to 9)
-    const session = this.sessionService.getSession(sessionId);
+    // ── Turns 1–8: Dialogue Loop ──────────────────────────────────────────────
+    const session = this.sessionService.getSession(interviewId);
     if (!session) {
-      return {
-        reply: "Session not found or has expired. Please select a candidate and restart.",
-        done: false
-      };
+      console.warn(`[InterviewService] Error: Could not find interviewId: ${interviewId} in map!`);
+      return { reply: 'Session not found or has expired. Please select a candidate and restart.', done: false };
     }
 
-    // If session is already completed, return final feedback directly
     if (session.feedback) {
-      return {
-        reply: "Your interview is completed. Thank you.",
-        done: true,
-        feedback: session.feedback
-      };
+      return { reply: 'Your interview is completed. Thank you.', done: true, feedback: session.feedback };
     }
 
     const { selectedDays, candidate } = session;
-    let { 
-      questionCount = 0, 
-      currentDayIndex = 0, 
-      attempts = 0, 
-      followUps = 0, 
-      status = "WAITING_FOR_ANSWER" 
-    } = session;
+    let { questionCount = 0, currentDayIndex = 0, attempts = 0, followUps = 0, status = 'WAITING_FOR_ANSWER' } = session;
 
-    // 1. Evaluate candidate's last response if they just answered a question
+    // ── 1. Evaluate the candidate's previous answer ────────────────────────
     let evaluation = null;
-    let lastQuestion = "";
-    
+    let lastQuestion = '';
+
     if (questionCount > 0 && message) {
-      // Find the last model message in history
-      if (session.history.length > 0) {
-        for (let i = session.history.length - 1; i >= 0; i--) {
-          if (session.history[i].role === 'model') {
-            lastQuestion = session.history[i].content;
-            break;
-          }
-        }
+      // Find the last model turn
+      for (let i = session.history.length - 1; i >= 0; i--) {
+        if (session.history[i].role === 'model') { lastQuestion = session.history[i].content; break; }
       }
 
       if (lastQuestion) {
         const targetDayObj = selectedDays[currentDayIndex];
         const activeDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
         const activeDayDetails = this.curriculumService.getDayDetails(activeDayNumber);
-        
+
         console.log(`[InterviewService] Evaluating answer for Day ${activeDayNumber} (${activeDayDetails.title})...`);
         evaluation = await this.evaluationService.evaluateAnswer(
           activeDayNumber,
@@ -113,107 +90,118 @@ Let's begin.`;
           message
         );
 
-        if (!session.evaluations) {
-          session.evaluations = [];
-        }
+        if (!session.evaluations) session.evaluations = [];
         session.evaluations.push({
           day: activeDayNumber,
           title: activeDayDetails.title,
           question: lastQuestion,
           answer: message,
-          evaluation: evaluation,
+          evaluation,
           questionId: questionCount,
           attempts: attempts + 1,
-          followUps: followUps,
+          followUps,
           statusBefore: status
         });
+
+        // ── 2. Update evidence graph ────────────────────────────────────────
+        this.memoryService.processEvaluation(
+          session, evaluation, lastQuestion, message,
+          activeDayNumber, activeDayDetails.title, questionCount
+        );
       }
     }
 
-    // Append user response to history
-    if (message) {
-      session.history.push({ role: "user", content: message });
+    // Append candidate message to history
+    if (message) session.history.push({ role: 'user', content: message });
+
+    // ── 3. Determine adaptive strategy ────────────────────────────────────
+    let strategy = { type: 'curriculum', insight: null, interviewerStatus: null, statusDetail: null };
+    if (evaluation && session.evidenceGraph) {
+      strategy = this.memoryService.determineStrategy(session.evidenceGraph, evaluation);
+
+      const diffLevels = ['beginner', 'intermediate', 'advanced', 'senior'];
+      let currentDiff = session.interviewState.difficulty || 'intermediate';
+      let idx = diffLevels.indexOf(currentDiff);
+      let oldDiff = currentDiff;
+
+      if (strategy.type === 'deeper') {
+        idx = Math.min(idx + 1, diffLevels.length - 1);
+      } else if (strategy.type === 'diagnostic') {
+        idx = Math.max(idx - 1, 0);
+      }
+
+      if (diffLevels[idx] !== oldDiff) {
+        session.interviewState.difficulty = diffLevels[idx];
+        session.interviewState.difficultyChanges.push({
+          previousDifficulty: oldDiff,
+          newDifficulty: diffLevels[idx],
+          reason: strategy.statusDetail,
+          evidence: message
+        });
+      }
+
+      session.interviewState.lastStrategy = strategy;
+      session.interviewState.interviewerStatus = strategy.interviewerStatus;
+      session.interviewState.statusDetail = strategy.statusDetail;
     }
 
-    // Determine the next state transition
+    // ── 4. State transition (existing logic, unchanged) ────────────────────
     let transitionToNextQuestion = false;
 
     if (questionCount === 0) {
-      // Transitioning from welcome greeting to first question
-      questionCount = 1;
-      attempts = 0;
-      followUps = 0;
-      status = "WAITING_FOR_ANSWER";
-      currentDayIndex = 0;
+      questionCount = 1; attempts = 0; followUps = 0; status = 'WAITING_FOR_ANSWER'; currentDayIndex = 0;
     } else if (evaluation) {
-      const classification = evaluation.classification || "Partially Correct";
-
-      if (classification === "Off Topic") {
-        attempts += 1;
-        status = "RETRY";
+      const classification = evaluation.classification || 'Partially Correct';
+      if (classification === 'Off Topic') {
+        attempts += 1; status = 'RETRY';
       } else if (classification === "Don't Know") {
-        if (status !== "HINT") {
-          attempts += 1;
-          status = "HINT";
-        } else {
-          transitionToNextQuestion = true;
-        }
-      } else if (classification === "Correct") {
+        if (status !== 'HINT') { attempts += 1; status = 'HINT'; }
+        else { transitionToNextQuestion = true; }
+      } else if (classification === 'Correct') {
         transitionToNextQuestion = true;
       } else {
         // Partially Correct or Incorrect
-        if (status !== "FOLLOW_UP") {
-          attempts += 1;
-          followUps += 1;
-          status = "FOLLOW_UP";
-        } else {
-          transitionToNextQuestion = true;
-        }
+        if (status !== 'FOLLOW_UP') { attempts += 1; followUps += 1; status = 'FOLLOW_UP'; }
+        else { transitionToNextQuestion = true; }
       }
     }
 
+    // ── 5. End / advance ─────────────────────────────────────────────────
     if (transitionToNextQuestion) {
-      if (questionCount >= 8) {
-        console.log(`[InterviewService] Interview complete for session ${sessionId}. Compiling final feedback report.`);
-        const feedback = await this.feedbackService.generateFeedback(candidate, session.history, session.evaluations || []);
-        
-        this.sessionService.updateSession(sessionId, { 
-          feedback, 
-          evaluations: session.evaluations || [],
-          questionCount: 8,
-          status: "COMPLETED"
-        });
+      // Mark the strategy's insight as addressed before moving on
+      if (session.evidenceGraph) this.memoryService.markInsightAddressed(session.evidenceGraph, strategy);
 
+      if (questionCount >= 8) {
+        console.log(`[InterviewService] Interview complete. Compiling final feedback.`);
+        const feedback = await this.feedbackService.generateFeedback(
+          candidate, session.history, session.evaluations || [], session.evidenceGraph
+        );
+        this.sessionService.updateSession(interviewId, {
+          feedback, evaluations: session.evaluations || [], questionCount: 8, status: 'COMPLETED'
+        });
         return {
-          reply: "Thank you. Your interview has concluded. We are compiling your feedback.",
+          reply: 'Thank you. Your interview has concluded. We are compiling your feedback.',
           done: true,
           feedback,
+          skillMap: this.memoryService.getSkillMap(session.evidenceGraph),
           mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
         };
       } else {
-        questionCount += 1;
-        currentDayIndex += 1;
-        attempts = 0;
-        followUps = 0;
-        status = "WAITING_FOR_ANSWER";
+        questionCount += 1; currentDayIndex += 1; attempts = 0; followUps = 0; status = 'WAITING_FOR_ANSWER';
       }
     }
 
-    // Generate active day question
+    // ── 6. Build and call prompt ──────────────────────────────────────────
     const targetDayObj = selectedDays[currentDayIndex];
     const targetDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
     const dayDetails = this.curriculumService.getDayDetails(targetDayNumber);
 
     if (!dayDetails) {
-      return {
-        reply: `Error retrieving syllabus details for Day ${targetDayNumber}. Let's skip to the next topic.`,
-        done: false
-      };
+      return { reply: `Error retrieving syllabus data for Day ${targetDayNumber}. Let's skip to the next topic.`, done: false };
     }
 
-    // Compile Prompt Context
     const systemPrompt = this.promptService.buildSystemPrompt(candidate);
-    const activeDayTurn = (status === "WAITING_FOR_ANSWER") ? 1 : 2;
+    const activeDayTurn = (status === 'WAITING_FOR_ANSWER') ? 1 : 2;
 
     const questionPrompt = this.promptService.buildQuestionPrompt(
       targetDayNumber,
@@ -222,26 +210,50 @@ Let's begin.`;
       dayDetails.objectives,
       activeDayTurn,
       session.history,
-      message || "",
-      evaluation
+      message || '',
+      evaluation,
+      strategy,         // ← adaptive strategy (new param)
+      candidate,
+      session.interviewState.difficulty
     );
 
-    // Call LLM Service
-    console.log(`[InterviewService] Generating question ${questionCount} (Day ${targetDayNumber}, Status: ${status}, Attempts: ${attempts}, Follow-ups: ${followUps})`);
-    const questionResponse = await this.llmService.generateResponse(systemPrompt, questionPrompt);
+    console.log(`[InterviewService] Generating Q${questionCount} (Day ${targetDayNumber}, Status: ${status}, Strategy: ${strategy.type})`);
+    const rawQuestionResponse = await this.llmService.generateResponse(systemPrompt, questionPrompt);
+    let questionResponse = '';
 
-    // Save turn to history
-    session.history.push({ role: "model", content: questionResponse });
+    try {
+      let cleanResponse = rawQuestionResponse.replace(/<think>[\s\S]*?<\/think>\s*/gi, '').trim();
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim();
+      }
+      const jsonRegex = /\{[\s\S]*\}/;
+      const match = cleanResponse.match(jsonRegex);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.question) {
+          questionResponse = parsed.question;
+        } else {
+          throw new Error('Missing "question" field in JSON');
+        }
+      } else {
+        throw new Error('No JSON object found');
+      }
+    } catch (err) {
+      console.warn(`[InterviewService] JSON parse failed on adaptive output. Falling back to safe question. Error: ${err.message}`);
+      const ack = evaluation ? (evaluation.acknowledgmentText || "Acknowledged.") : "Acknowledged.";
+      questionResponse = `${ack} Let's explore your understanding of ${dayDetails.title}. Can you explain it in your own words?`;
+    }
 
-    // Update session state
-    this.sessionService.updateSession(sessionId, {
-      questionCount,
-      currentDayIndex,
-      attempts,
-      followUps,
-      status,
-      evaluations: session.evaluations || []
+    session.history.push({ role: 'model', content: questionResponse });
+
+    this.sessionService.updateSession(interviewId, {
+      questionCount, currentDayIndex, attempts, followUps, status,
+      evaluations: session.evaluations || [],
+      interviewState: session.interviewState
     });
+
+    // Build skill map for frontend
+    const skillMap = session.evidenceGraph ? this.memoryService.getSkillMap(session.evidenceGraph) : [];
 
     return {
       reply: questionResponse,
@@ -249,11 +261,15 @@ Let's begin.`;
       questionCount,
       activeDay: targetDayNumber,
       activeDayTitle: dayDetails.title,
-      evaluation: evaluation,
+      evaluation,
       attempts,
       followUps,
       status,
-      mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
+      mockMode: this.llmService.fallbackActive || !this.llmService.apiKey,
+      // ── new fields ──────────────────────────────────────────────────────
+      skillMap,
+      interviewerStatus: session.interviewState ? session.interviewState.interviewerStatus : null,
+      statusDetail: session.interviewState ? session.interviewState.statusDetail : null
     };
   }
 }

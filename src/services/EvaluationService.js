@@ -10,8 +10,8 @@ class EvaluationService {
    */
   async evaluateAnswer(dayNumber, dayTitle, tools, objectives, questionAsked, candidateAnswer) {
     const toolsList = Array.isArray(tools) ? tools.join(', ') : tools || 'None';
-    const objectivesList = Array.isArray(objectives) 
-      ? objectives.map(obj => `- ${obj}`).join('\n') 
+    const objectivesList = Array.isArray(objectives)
+      ? objectives.map(obj => `- ${obj}`).join('\n')
       : objectives || 'None';
 
     const systemPrompt = `You are a Technical Interview Evaluator.
@@ -30,14 +30,30 @@ JSON Response Schema:
 {
   "classification": "Correct | Partially Correct | Incorrect | Don't Know | Off Topic",
   "scores": {
-    "accuracy": 0,      // Score 0-5
+    "knowledge": 0,      // Score 0-5
     "reasoning": 0,     // Score 0-5
     "communication": 0, // Score 0-5
     "confidence": 0     // Score 0-5
   },
   "reasoningText": "Brief explanation of the scores and classification choice.",
-  "acknowledgmentText": "A natural-language acknowledgment statement to show to the candidate (e.g. 'That is correct.', 'Not quite accurate.', 'No problem, let's simplify.')"
-}`;
+  "acknowledgmentText": "A natural-language acknowledgment statement to show to the candidate.",
+  "claims": [
+    {
+      "claim": "exact or close paraphrase of a factual claim made by the candidate",
+      "relatedSkill": "name of the skill or concept this claim relates to",
+      "status": "correct | incorrect | uncertain | unverified"
+    }
+  ],
+  "misconceptions": [
+    {
+      "concept": "name of the concept the candidate misunderstood",
+      "misunderstanding": "brief description of what the candidate got wrong",
+      "severity": "low | medium | high"
+    }
+  ],
+  "suggestedQuestionType": "deeper | diagnostic | clarification | challenge | contradiction | curriculum"
+}
+IMPORTANT: claims and misconceptions arrays may be empty [] if none apply. Do not invent evidence.`;
 
     const userPrompt = `Evaluate the candidate's response.
 Candidate's Response: "${candidateAnswer}"`;
@@ -52,13 +68,17 @@ Candidate's Response: "${candidateAnswer}"`;
       return {
         classification: evalResult.classification || 'Incorrect',
         scores: {
-          accuracy: Number(evalResult.scores?.accuracy ?? 2),
+          knowledge: Number(evalResult.scores?.knowledge ?? 2),
           reasoning: Number(evalResult.scores?.reasoning ?? 2),
           communication: Number(evalResult.scores?.communication ?? 2),
           confidence: Number(evalResult.scores?.confidence ?? 2)
         },
         reasoningText: evalResult.reasoningText || 'Evaluated answer.',
-        acknowledgmentText: evalResult.acknowledgmentText || 'Acknowledged.'
+        acknowledgmentText: evalResult.acknowledgmentText || 'Acknowledged.',
+        // Evidence fields (empty array if LLM omitted them)
+        claims: Array.isArray(evalResult.claims) ? evalResult.claims : [],
+        misconceptions: Array.isArray(evalResult.misconceptions) ? evalResult.misconceptions : [],
+        suggestedQuestionType: evalResult.suggestedQuestionType || 'curriculum'
       };
     } catch (err) {
       console.error('[EvaluationService] Error running evaluation, falling back. Error:', err.message);
@@ -84,30 +104,34 @@ Candidate's Response: "${candidateAnswer}"`;
    */
   getFallbackEvaluation(answer) {
     const text = (answer || '').trim().toLowerCase();
-    
+    const base = { claims: [], misconceptions: [], suggestedQuestionType: 'curriculum' };
+
     if (text === '' || text.includes('know') || text.includes('skip') || text.includes('pass')) {
       return {
-        classification: 'Don\'t Know',
-        scores: { accuracy: 0, reasoning: 0, communication: 3, confidence: 1 },
+        ...base,
+        classification: "Don't Know",
+        scores: { knowledge: 0, reasoning: 0, communication: 3, confidence: 1 },
         reasoningText: 'Candidate skipped or passed the question.',
-        acknowledgmentText: 'No problem. Let\'s simplify.'
+        acknowledgmentText: "No problem. Let's simplify."
       };
     }
 
     if (text.length < 10) {
       return {
+        ...base,
         classification: 'Off Topic',
         scores: { accuracy: 1, reasoning: 1, communication: 2, confidence: 2 },
         reasoningText: 'Candidate response was too short or irrelevant.',
-        acknowledgmentText: 'I don\'t think that fully answers the question.'
+        acknowledgmentText: "I don't think that fully answers the question."
       };
     }
 
     return {
+      ...base,
       classification: 'Partially Correct',
       scores: { accuracy: 3, reasoning: 3, communication: 3, confidence: 3 },
       reasoningText: 'Fallback assessment applied.',
-      acknowledgmentText: 'Acknowledged. Let\'s go deeper.'
+      acknowledgmentText: "Acknowledged. Let's go deeper."
     };
   }
 }
