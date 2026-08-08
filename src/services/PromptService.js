@@ -10,7 +10,7 @@ class PromptService {
 
   buildQuestionPrompt(dayNumber, dayTitle, tools, objectives, turnNumber, dialogueHistory, lastMessage) {
     if (parseInt(turnNumber) === 1) {
-      return InterviewPromptBuilder.build(dayNumber, dayTitle, tools, objectives);
+      return InterviewPromptBuilder.build(dayNumber, dayTitle, tools, objectives, lastMessage);
     } else {
       return FollowUpPromptBuilder.build(dayNumber, dayTitle, dialogueHistory, lastMessage);
     }

@@ -11,12 +11,16 @@ ${historyText}
 
 Candidate's Last Message: "${lastMessage}"
 
-Instructions:
-Analyze the candidate's last message in the context of the dialogue history.
-1. If the answer is vague, incomplete, or technically incorrect, ask a follow-up question to probe for details or clarify their statement.
-2. If the answer shows solid understanding, ask a question challenging their understanding of trade-offs, failure cases, or design alternatives for this day's concepts.
-3. Keep the question concise. Do not introduce new days or topics. Focus only on validating their understanding of this day's concepts.
-4. Ask only one specific follow-up question.`;
+Assessment and Questioning Guidelines:
+1. Evaluate the candidate's last message:
+   - If they say "i don't know", "skip", "pass", or give a completely wrong answer, classify it as "Incorrect/Unknown".
+   - If they give a partial answer, classify it as "Partially Correct".
+   - If they give a complete answer, classify it as "Correct".
+2. Formulate your response:
+   - First, provide a brief, professional feedback acknowledgment based on your evaluation (e.g. "That is correct.", "Partially correct.", "No problem. Let's simplify.").
+   - If "Incorrect/Unknown", do not probe deeper. Instead, ask a simplified question or offer a helpful hint regarding the active day's objectives to guide them.
+   - If "Partially Correct" or "Correct", ask a follow-up question that pushes them deeper into implementation details, trade-offs, configuration settings, or edge-case handling.
+3. Keep the response concise. Focus only on this day's concepts. Ask only one question.`;
   }
 }
 

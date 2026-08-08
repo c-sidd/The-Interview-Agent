@@ -74,6 +74,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Helper to update sidebar progress fills and checklists
+  function updateSidebarProgress(questionCount, done) {
+    const percent = Math.min((questionCount / 8) * 100, 100);
+    document.getElementById('sidebar-progress-fill').style.width = `${percent}%`;
+    document.getElementById('sidebar-progress-label').textContent = `${questionCount} / 8 Questions`;
+
+    const list = document.getElementById('sidebar-topics-list');
+    const items = list.querySelectorAll('li');
+    items.forEach((li, idx) => {
+      let status = 'upcoming';
+      if (done) {
+        status = 'completed';
+      } else {
+        const activeIndex = Math.min(Math.floor(questionCount / 2), 3);
+        if (idx < activeIndex) {
+          status = 'completed';
+        } else if (idx === activeIndex) {
+          status = 'active';
+        } else {
+          status = 'upcoming';
+        }
+      }
+      li.className = status;
+
+      let icon = '•';
+      if (status === 'completed') icon = '✓';
+      else if (status === 'active') icon = '▶';
+      
+      const iconSpan = li.querySelector('.status-icon');
+      if (iconSpan) iconSpan.textContent = icon;
+    });
+  }
+
   // 2. Start Interview (Initialize Session Turn 0)
   async function startInterview(candidate) {
     activeCandidate = candidate;
@@ -84,6 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
     activeRoleLabel.textContent = candidate.member.jobRole;
     activeTopicLabel.textContent = "Initialization";
     activeTurnLabel.textContent = "0 / 8";
+
+    // Set Sidebar Details
+    document.getElementById('sidebar-cand-name').textContent = candidate.member.name;
+    document.getElementById('sidebar-cand-role').textContent = candidate.member.jobRole;
+    document.getElementById('sidebar-cand-exp').textContent = `${candidate.member.yearsExperience} Years`;
+    document.getElementById('sidebar-progress-fill').style.width = '0%';
+    document.getElementById('sidebar-progress-label').textContent = '0 / 8 Questions';
+    document.getElementById('sidebar-topics-list').innerHTML = '<li class="upcoming"><span class="status-icon">•</span> Loading topics...</li>';
 
     // Transition view
     selectorView.classList.remove('active');
@@ -108,6 +149,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.error) {
         appendMessage('interviewer', `Error starting session: ${data.error}`);
         return;
+      }
+
+      // Populate Topics List in Sidebar
+      if (data.selectedDays) {
+        const topicsList = document.getElementById('sidebar-topics-list');
+        topicsList.innerHTML = '';
+        data.selectedDays.forEach((topic, idx) => {
+          const li = document.createElement('li');
+          li.className = idx === 0 ? 'active' : 'upcoming';
+          li.innerHTML = `<span class="status-icon">${idx === 0 ? '▶' : '•'}</span> Day ${topic.day}: ${topic.title}`;
+          topicsList.appendChild(li);
+        });
       }
 
       // Append Welcome Message
@@ -154,15 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.done) {
         // Show completion message
         appendMessage('interviewer', data.reply);
+        updateSidebarProgress(8, true);
         // Transition to feedback screen after brief delay
         setTimeout(() => showFeedback(data.feedback), 2500);
       } else {
         // Render interviewer next question
         appendMessage('interviewer', data.reply);
         
-        // Update header details
+        // Update header & sidebar details
         if (data.questionCount !== undefined) {
           activeTurnLabel.textContent = `${data.questionCount} / 8`;
+          updateSidebarProgress(data.questionCount, false);
         }
         if (data.activeDay !== undefined && data.activeDayTitle !== undefined) {
           activeTopicLabel.textContent = `Day ${data.activeDay} - ${data.activeDayTitle}`;
@@ -190,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     indicator.id = 'typing-indicator-bubble';
     indicator.className = 'msg-bubble interviewer typing-indicator';
     indicator.innerHTML = `
+      <span style="margin-right: 8px; font-weight: 500; color: var(--text-secondary); font-size: 0.85rem;">AI Interviewer is thinking...</span>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>

@@ -76,6 +76,11 @@ class LLMService {
       const dayTitle = dayMatch[2].trim();
 
       if (isFollowUp) {
+        // Intercept skip/unknown phrases in candidate answers to simulate adaptive simplification
+        const normalizedPrompt = userPrompt.toLowerCase();
+        if (normalizedPrompt.includes("i don't know") || normalizedPrompt.includes("skip") || normalizedPrompt.includes("pass")) {
+          return `No problem. Let's simplify: for Day ${dayNum} (${dayTitle}), can you explain the basic tools you configured and what you recall about their purposes?`;
+        }
         return `Thanks for sharing details about your Day ${dayNum} (${dayTitle}) setup. Can you explain the main trade-offs, constraints, or configuration issues you faced during this implementation?`;
       } else {
         return `Let's discuss Day ${dayNum} which focused on "${dayTitle}". Can you outline the primary tools you used and explain how you achieved the learning objectives for this module?`;

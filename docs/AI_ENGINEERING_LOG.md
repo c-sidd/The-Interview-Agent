@@ -985,3 +985,57 @@ Ran `node src/services/test_prompts.js; node test_api.js; node test_edge_cases.j
 
 ### Git Commit
 `chore: complete final milestone and mark repository as submission ready`
+
+---
+
+## Entry M36-Adaptive-Features
+
+*   **Milestone**: `M36-Adaptive-Features`
+*   **Date**: 2026-08-08
+*   **Time**: 15:10:00
+*   **Current Branch**: `main`
+
+### Problem
+Improve the Interview Engine and interface to evaluate answers (handling skips/unknowns adaptively), show interview progress/coverage, integrate a candidate dashboard sidebar, add a thinking state label, and personalize greetings.
+
+### Why This Problem Matters
+Without evaluations and adaptive questioning, the dialogue loop acts as a generic sequential prompt generator. Adaptive feedback and visual trackers make the application function as a true smart AI Technical Assessment Platform.
+
+### Possible Approaches Considered
+1.  **Option A**: Run multiple separate LLM prompts for scoring answers before generating follow-ups.
+2.  **Option B**: Integrate evaluation rules directly into prompt builder instructions (`FollowUpPromptBuilder` and `InterviewPromptBuilder`) and intercept skip/pass phrases in the responder mock configurations.
+
+### Chosen Solution
+Option B: Updated prompt builders with evaluation guidelines and modified the frontend layout to host a sidebar panel.
+
+### Why This Solution Was Selected
+Minimizes total API request count and reduces dialogue latency, keeping the application fast and responsive while providing feedback.
+
+### AI Collaboration
+AI assistant drafted style properties for progress bars and checkboxes.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Programmed candidate welcomes to compile programmatically at Turn 0 initialization, list target topics, and return instantly in 0ms without LLM latency.
+*   **Decisions Rejected**: Rejected updating the memory database schema to store text labels for each question score, retaining the simpler in-memory session structure.
+*   **Manual Refinements**: Refined the grid layouts to support responsive collapsing of the sidebar on mobile viewports.
+
+### Files Created or Modified
+*   `public/index.html`
+*   `public/style.css`
+*   `public/app.js`
+*   `src/services/InterviewService.js`
+*   `src/services/LLMService.js`
+*   `src/services/PromptService.js`
+*   `src/services/promptBuilders/FollowUpPromptBuilder.js`
+*   `src/services/promptBuilders/InterviewPromptBuilder.js`
+
+### Verification & Testing
+Ran automated API regression test suites and verified in the browser that:
+*   Selecting a candidate opens the split view showing candidate metadata and 4 checklists.
+*   Initial greetings welcome candidates and state selected day topics.
+*   Entering "i don't know" simplifies the active question dynamically.
+*   Thinking indicators display loading labels.
+
+### Git Commit
+`feat: implement answer evaluation, adaptive follow-ups, personalized welcomes, and progress sidebar`
+

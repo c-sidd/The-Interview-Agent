@@ -45,38 +45,66 @@
 
     <!-- View 2: Active Chat Interface -->
     <section id="chat-view" class="view-panel">
-      <div class="chat-header">
-        <div class="candidate-meta">
-          <h2 id="active-candidate-name">Candidate Name</h2>
-          <span id="active-candidate-role" class="candidate-role-badge">Senior Developer</span>
+      <!-- Left Sidebar -->
+      <div class="chat-sidebar">
+        <div class="sidebar-candidate-card">
+          <h3 id="sidebar-cand-name">Candidate Name</h3>
+          <p id="sidebar-cand-role">Role</p>
+          <div class="sidebar-detail">Exp: <span id="sidebar-cand-exp">9 Years</span></div>
         </div>
-        <div class="progress-container">
-          <div class="day-details">
-            <span class="label">Assessing topic:</span>
-            <strong id="active-topic-day">Day 1 - Setup</strong>
+
+        <div class="sidebar-progress-section">
+          <h4>Interview Progress</h4>
+          <!-- Progress Bar -->
+          <div class="progress-bar-container">
+            <div id="sidebar-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
           </div>
-          <div class="turn-tracker">
-            <span class="label">Questions Asked:</span>
-            <strong id="active-turn-count">0 / 8</strong>
-          </div>
+          <div id="sidebar-progress-label" class="progress-label">0 / 8 Questions</div>
+        </div>
+
+        <div class="sidebar-topics-section">
+          <h4>Assessed Topics</h4>
+          <ul id="sidebar-topics-list" class="sidebar-topics-list">
+            <!-- Dynamically populated -->
+          </ul>
         </div>
       </div>
 
-      <div id="chat-messages" class="chat-messages">
-        <!-- Message bubbles rendered dynamically -->
-      </div>
+      <!-- Right Main Chat Area -->
+      <div class="chat-main-area">
+        <div class="chat-header">
+          <div class="candidate-meta">
+            <h2 id="active-candidate-name">Candidate Name</h2>
+            <span id="active-candidate-role" class="candidate-role-badge">Senior Developer</span>
+          </div>
+          <div class="progress-container">
+            <div class="day-details">
+              <span class="label">Assessing topic:</span>
+              <strong id="active-topic-day">Day 1 - Setup</strong>
+            </div>
+            <div class="turn-tracker">
+              <span class="label">Questions Asked:</span>
+              <strong id="active-turn-count">0 / 8</strong>
+            </div>
+          </div>
+        </div>
 
-      <div class="chat-input-area">
-        <form id="chat-form" class="chat-form">
-          <input type="text" id="chat-input" placeholder="Type your response..." autocomplete="off" required>
-          <button type="submit" id="send-btn" class="send-btn">
-            <span>Send</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </form>
+        <div id="chat-messages" class="chat-messages">
+          <!-- Message bubbles rendered dynamically -->
+        </div>
+
+        <div class="chat-input-area">
+          <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Type your response..." autocomplete="off" required>
+            <button type="submit" id="send-btn" class="send-btn">
+              <span>Send</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </form>
+        </div>
       </div>
     </section>
 

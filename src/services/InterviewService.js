@@ -20,13 +20,35 @@ class InterviewService {
       // Save state to SessionService
       this.sessionService.createSession(sessionId, candidateInput, targetDays);
 
-      // Return welcome reply immediately without invoking LLM
+      // Programmatically build a personalized welcome message based on candidate signals
+      const firstName = candidateInput.member.name.split(' ')[0];
+      const jobRole = candidateInput.member.jobRole;
+      const missionsCompleted = candidateInput.signals ? candidateInput.signals.missionsCompleted : 0;
+      
+      const selectedTopics = targetDays.map(dayNum => {
+        const details = this.curriculumService.getDayDetails(dayNum);
+        return {
+          day: dayNum,
+          title: details ? details.title : `Day ${dayNum}`
+        };
+      });
+
+      const topicTitlesText = selectedTopics.map(t => `${t.title} (Day ${t.day})`);
+      const topicsText = topicTitlesText.slice(0, -1).join(', ') + ', and ' + topicTitlesText.slice(-1);
+
+      const personalizedWelcome = `Welcome ${firstName}. I have reviewed your learning profile for the ${jobRole} target track. You completed ${missionsCompleted} curriculum missions with strong performance.
+
+Today, I would like to evaluate your understanding of: ${topicsText}.
+
+Let's begin.`;
+
       return {
-        reply: "Welcome. Let's begin your interview.",
+        reply: personalizedWelcome,
         done: false,
         questionCount: 0,
         activeDay: targetDays[0],
-        activeDayTitle: "Initialization"
+        activeDayTitle: "Initialization",
+        selectedDays: selectedTopics
       };
     }
 
