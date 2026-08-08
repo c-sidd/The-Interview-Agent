@@ -248,3 +248,42 @@ AI assistant drafted the templates and helped formalize the variables (`candidat
 
 ### Git Commit
 `docs: design segregated prompt templates for system, interview, and follow-ups`
+
+---
+
+## Entry M09
+
+*   **Milestone**: `M09`
+*   **Date**: 2026-08-08
+*   **Time**: 13:16:00
+*   **Current Branch**: `main`
+
+### Problem
+Design the prompt instructions for compiling candidate feedback to ensure the LLM returns structured JSON data matching the required schema (summary, strengths, gaps, next steps) without formatting errors.
+
+### Why This Problem Matters
+If the LLM outputs natural language explanation wrappers or incorrect JSON keys, the JSON parsing on the backend server will fail, resulting in a HTTP 500 crash on the final interview turn.
+
+### Possible Approaches Considered
+1.  **Option A**: Request plain text evaluation from the LLM and use regex selectors to split fields.
+2.  **Option B**: Enforce a strict JSON output instruction in the prompt, providing an example schema, and instructing the LLM to output only raw JSON.
+
+### Chosen Solution
+Option B: Added the `FeedbackPromptBuilder` specs to `docs/PROMPT_DESIGNS.md` to guide the LLM to output a valid JSON payload.
+
+### Why This Solution Was Selected
+Provides a reliable way to map dialogue performance directly to the database API contract.
+
+### AI Collaboration
+AI assistant helped format the JSON schema and detail the specific instructions for parsing dialogue histories.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Explicitly instructed the LLM to exclude markdown formatting fences (e.g., ````json ... ````) to prevent JSON parsing issues.
+*   **Decisions Rejected**: Rejected parsing intermediate feedback, keeping grading concentrated on the final turn to save tokens and costs.
+*   **Manual Refinements**: Refined validation rules to require at least two distinct points for strengths, gaps, and recommendations.
+
+### Files Modified
+*   `docs/PROMPT_DESIGNS.md`
+
+### Git Commit
+`docs: design feedback prompt evaluation schemas`

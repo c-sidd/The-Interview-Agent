@@ -80,3 +80,39 @@ Analyze the candidate's last message.
 ```
 
 ---
+
+## 4. Feedback Prompt Builder (`FeedbackPromptBuilder`)
+
+Generates the grading prompt that instructs the LLM to compile candidate evaluations and return a valid JSON object matching the required schema.
+
+### Base Template
+```text
+You are a Senior Technical Evaluator. The mock interview for candidate {{candidateName}} (Target Role: {{candidateRole}}) has been completed.
+You must compile a detailed, objective, and actionable feedback report based on the candidate's answers during the interview.
+
+Complete Dialogue History:
+{{dialogueHistory}}
+
+Instructions:
+Evaluate the candidate's performance across the assessed topics. Identify specific strengths, technical gaps, and concrete recommendations for improvement.
+You must output ONLY a valid JSON object matching the schema below. Do not include any markdown fences (like ```json), leading text, or trailing explanations. The output must be pure JSON.
+
+Required JSON Schema:
+{
+  "summary": "A concise paragraph summarizing the candidate's overall technical performance and readiness.",
+  "strengths": [
+    "At least two specific, technically accurate strengths demonstrated during the interview (e.g. 'Demonstrated solid understanding of indexing settings in ChromaDB')."
+  ],
+  "gaps": [
+    "At least two specific gaps or misunderstandings identified during the interview (e.g. 'Struggled to explain the difference between LoRA parameters and full fine-tuning')."
+  ],
+  "next": [
+    "At least two actionable, concrete next steps or study recommendations mapped directly to their gaps."
+  ]
+}
+```
+
+---
+
+
+---
