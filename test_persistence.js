@@ -22,7 +22,7 @@ function request(options, data) {
 }
 
 async function run() {
-    const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+    const interviewId = 'session-' + Math.random().toString(36).substring(2, 9);
     const candidate = {
         member: { name: 'Test Person', jobRole: 'Developer', yearsExperience: 3 },
         signals: {}
@@ -32,19 +32,19 @@ async function run() {
     const res1 = await request({
         hostname: 'localhost', port: 3000, path: '/api/interview', method: 'POST',
         headers: { 'Content-Type': 'application/json' }
-    }, { sessionId, candidate });
+    }, { interviewId, candidate });
     console.log('Session Created. Turn 1 reply:', res1.reply);
 
     console.log('\n--- TEST 2: Answer Question 1 ---');
     const res2 = await request({
         hostname: 'localhost', port: 3000, path: '/api/interview', method: 'POST',
         headers: { 'Content-Type': 'application/json' }
-    }, { sessionId, message: 'I know some things.' });
+    }, { interviewId, message: 'I know some things.' });
     console.log('Turn 2 reply:', res2.reply);
 
     console.log('\n--- TEST 3: Fetch Session via GET ---');
     const res3 = await request({
-        hostname: 'localhost', port: 3000, path: `/api/session/${sessionId}`, method: 'GET'
+        hostname: 'localhost', port: 3000, path: `/api/session/${interviewId}`, method: 'GET'
     });
     console.log('Restored history length:', res3.history.length);
     console.log('Restored question count:', res3.questionCount);

@@ -104,6 +104,13 @@ body {
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--text-primary);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.logo:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
 }
 
 .logo svg {

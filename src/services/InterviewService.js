@@ -21,16 +21,16 @@ class InterviewService {
     // ── Turn 0: Session Initialization ───────────────────────────────────────
     if (candidateInput) {
       const targetDays = this.curriculumService.selectTargetDays(candidateInput);
-      this.sessionService.createSession(interviewId, candidateInput, targetDays);
-
-      const firstName = candidateInput.member.name.split(' ')[0];
-      const jobRole = candidateInput.member.jobRole;
-      const missionsCompleted = candidateInput.signals ? candidateInput.signals.missionsCompleted : 0;
-
       const selectedTopics = targetDays.map(dayNum => {
         const details = this.curriculumService.getDayDetails(dayNum);
         return { day: dayNum, title: details ? details.title : `Day ${dayNum}` };
       });
+
+      this.sessionService.createSession(interviewId, candidateInput, selectedTopics);
+
+      const firstName = candidateInput.member.name.split(' ')[0];
+      const jobRole = candidateInput.member.jobRole;
+      const missionsCompleted = candidateInput.signals ? candidateInput.signals.missionsCompleted : 0;
 
       const topicTitlesText = selectedTopics.map(t => `${t.title} (Day ${t.day})`);
       const topicsText = topicTitlesText.slice(0, -1).join(', ') + ', and ' + topicTitlesText.slice(-1);
@@ -152,17 +152,34 @@ class InterviewService {
       questionCount = 1; attempts = 0; followUps = 0; status = 'WAITING_FOR_ANSWER'; currentDayIndex = 0;
     } else if (evaluation) {
       const classification = evaluation.classification || 'Partially Correct';
-      if (classification === 'Off Topic') {
-        attempts += 1; status = 'RETRY';
-      } else if (classification === "Don't Know") {
-        if (status !== 'HINT') { attempts += 1; status = 'HINT'; }
-        else { transitionToNextQuestion = true; }
-      } else if (classification === 'Correct') {
+      if (classification === 'Correct') {
         transitionToNextQuestion = true;
+      } else if (classification === 'Off Topic') {
+        status = 'RETRY';
+      } else if (classification === "Don't Know" || classification === 'Incorrect') {
+        attempts += 1;
+        if (attempts >= 3) {
+          transitionToNextQuestion = true;
+          if (session.evidenceGraph) {
+            const targetDayObj = selectedDays[currentDayIndex];
+            const activeDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
+            const activeDayDetails = this.curriculumService.getDayDetails(activeDayNumber);
+            const skillName = activeDayDetails ? (activeDayDetails.title || 'General') : 'General';
+            if (session.evidenceGraph.skills[skillName]) {
+              session.evidenceGraph.skills[skillName].score = Math.max(5, session.evidenceGraph.skills[skillName].score - 25);
+            }
+          }
+        } else {
+          status = 'HINT';
+        }
       } else {
-        // Partially Correct or Incorrect
-        if (status !== 'FOLLOW_UP') { attempts += 1; followUps += 1; status = 'FOLLOW_UP'; }
-        else { transitionToNextQuestion = true; }
+        // Partially Correct
+        followUps += 1;
+        if (followUps > 2) {
+          transitionToNextQuestion = true;
+        } else {
+          status = 'FOLLOW_UP';
+        }
       }
     }
 
@@ -242,6 +259,11 @@ class InterviewService {
       console.warn(`[InterviewService] JSON parse failed on adaptive output. Falling back to safe question. Error: ${err.message}`);
       const ack = evaluation ? (evaluation.acknowledgmentText || "Acknowledged.") : "Acknowledged.";
       questionResponse = `${ack} Let's explore your understanding of ${dayDetails.title}. Can you explain it in your own words?`;
+    }
+
+    if (evaluation) {
+      const classification = evaluation.classification || 'Partially Correct';
+      questionResponse = `[${classification}] ${questionResponse}`;
     }
 
     session.history.push({ role: 'model', content: questionResponse });

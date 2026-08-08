@@ -385,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (diffEl && data.difficulty) diffEl.textContent = data.difficulty;
 
         removeTypingIndicator();
-        appendMessage('interviewer', data.reply);
       }
 
     } catch (err) {
@@ -422,6 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
     section.style.display = 'block';
     barsEl.innerHTML = skillMap.map(s => {
       const pct = Math.round(s.score);
+      const rating = pct >= 75 ? 'Strong' : (pct >= 50 ? 'Intermediate' : 'Weak');
+      const blocksCount = Math.min(10, Math.max(0, Math.round(pct / 10)));
+      const blocksStr = '█'.repeat(blocksCount) + '░'.repeat(10 - blocksCount);
       const color = pct >= 75 ? 'var(--accent-success)'
         : pct >= 50 ? 'var(--accent-glow)'
           : 'var(--accent-warn)';
@@ -429,7 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="skill-row">
           <div class="skill-row-header">
             <span class="skill-name">${s.skill}</span>
-            <span class="skill-score">${pct}</span>
+            <span class="skill-score" style="font-family: monospace; font-size: 0.85rem; letter-spacing: 1px;">
+              ${blocksStr} ${pct}% <span style="color: ${color}; font-weight: bold;">${rating}</span>
+            </span>
           </div>
           <div class="skill-bar-track">
             <div class="skill-bar-fill" style="width:${pct}%; background:${color};"></div>
@@ -547,6 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Refresh candidate grid
     loadCandidates();
+  }
+
+  // Logo acts as Home button (does NOT clear session state!)
+  const logoBtn = document.querySelector('.logo');
+  if (logoBtn) {
+    logoBtn.addEventListener('click', () => resetToSelector(false));
   }
 
   // Back button in chat header (does NOT clear the active session ID!)

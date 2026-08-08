@@ -1143,5 +1143,85 @@ Ran automated API regression test suites and verified in the browser that:
 ### Git Commit
 `feat: configure production live Gemini caller as primary pathway with dynamic status indicators`
 
+---
+
+## Entry M37-Engine-Refinement
+
+*   **Milestone**: `M37-Engine-Refinement`
+*   **Date**: 2026-08-08
+*   **Time**: 23:25:00
+*   **Current Branch**: `main`
+
+### Problem
+Refine the core technical interview state machine and representation:
+1. Candidate-Role Alignment: Non-technical candidates (e.g., Business Analyst) were assigned deep infrastructure topics (Kubernetes, Docker).
+2. Infinite loops: An incorrect answer could loop infinitely without moving on.
+3. Day undefined: UI header and sidebar rendered `Day undefined` on session re-loads.
+4. Plain skill meters: The sidebar showed plain numbers like `15` instead of rich indicators.
+5. Long-winded questions: LLM outputs grew too wordy for technical dialogue.
+6. Duplicate chat bubble: Interviewer bubbles duplicated in the message container.
+
+### Why This Problem Matters
+A high-fidelity evaluation tool must align dynamically with a candidate's background and keep them engaged without long prompts, infinite loops, or broken UI variables.
+
+### Possible Approaches Considered
+1.  **Option A**: Create multiple separate databases/endpoints for different roles.
+2.  **Option B**: Build smart filtering layers in `CurriculumService`, format topic mapping in session initialization, implement an attempts counter (Max 3), enforce word-count limits, and render responsive progress bars.
+
+### Chosen Solution
+Option B: Programmed filtering, attempts transition limits, concise template instructions, and block progress meters in `public/app.js`.
+
+### Why This Solution Was Selected
+Maintains the lightweight session structure while solving all requirements in the service layers.
+
+### Files Created or Modified
+*   `src/services/CurriculumService.js`
+*   `src/services/InterviewService.js`
+*   `src/services/promptBuilders/InterviewPromptBuilder.js`
+*   `src/services/promptBuilders/FollowUpPromptBuilder.js`
+*   `src/services/promptBuilders/AdaptiveQuestionBuilder.js`
+*   `public/app.js`
+*   `public/style.css`
+
+### Verification & Testing
+Ran regression tests (`test_persistence.js`, `test_refresh_persistence.js`, `test_memory.js`, `test_topic_drift.js`) and verified E2E in the browser that BA candidates do not get assigned DevOps days, loops terminate after 3 attempts, and skill maps render qualitative values successfully.
+
+### Git Commit
+`refactor: fix attempts infinite loop, day undefined variables, duplicate chat bubbles, and implement role filtering and block progress meters`
+
+---
+
+## Entry M38-Question-Progression
+
+*   **Milestone**: `M38-Question-Progression`
+*   **Date**: 2026-08-09
+*   **Time**: 00:15:00
+*   **Current Branch**: `main`
+
+### Problem
+Refine the technical interview state machine flow transitions:
+1. Max Attempts Cap (3): If the candidate answers Incorrectly or says "Don't Know", increment the attempts. If attempts reaches 3, record a low score/weak skill and transition immediately to the next curriculum topic.
+2. Max Follow-up Cap (2): If the candidate answers Partially Correct, ask up to 2 follow-up questions. After 2 follow-ups are completed, transition immediately to the next curriculum topic.
+3. Off Topic: Redirect politely without incrementing attempts or question counts.
+
+### Why This Problem Matters
+Guarantees the candidate stays engaged and that the interview progresses through exactly 8 primary questions representing all chosen topics, avoiding deadlocks.
+
+### Possible Approaches Considered
+1.  **Option A**: Mix attempts and follow-up flags in a single shared counter.
+2.  **Option B**: Manage explicit, isolated `attempts` and `followUps` counters in the session state database and process them with decoupled conditionals.
+
+### Chosen Solution
+Option B: Isolated counters and specific conditional branches in `InterviewService.js`.
+
+### Files Created or Modified
+*   `src/services/InterviewService.js`
+
+### Verification & Testing
+Ran automated persistence, refresh, and memory graph tests: all 20 tests pass. Verified E2E in browser that consecutive incorrect answers transition to the next topic on the 3rd attempt, and partially correct answers transition after 2 follow-ups.
+
+### Git Commit
+`feat: implement separate attempt and follow-up progression rules to prevent single-question loops`
+
 
 

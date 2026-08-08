@@ -164,6 +164,7 @@ Do not provide a critique.
 Do not provide a final-check section.
 Do not include markdown fences.
 Do not include any text before or after the JSON object.
+CRITICAL: Keep the question inside the "question" field extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
 
 Required schema:
 {

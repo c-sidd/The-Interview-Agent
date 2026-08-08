@@ -50,7 +50,7 @@ Instructions:
 Generate an initial, open-ended technical question to assess the candidate's understanding of the tools and learning objectives listed above.
 Do not cover multiple days or other topics at once. Focus only on this day's objectives.
 Ensure the question style and depth match the candidate's experience profile (Senior vs. Junior).
-Ask only one specific question.
+CRITICAL: Keep your question extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
 ```
 
 ---
@@ -77,12 +77,51 @@ Instructions:
 2. Based on the Classification:
    - If "Don't Know" or "Off Topic" or "Incorrect/Unknown" or "Incorrect": Do NOT ask a deeper or harder follow-up. Instead, ask a simplified question or provide a helpful hint about the active day's objectives to guide the candidate.
    - If "Correct" or "Partially Correct": Generate a deeper, challenging follow-up question probing for technical trade-offs, configuration challenges, performance optimizations, or edge-cases.
-3. Focus only on this day's concepts. Ask only one question. Conciseness is key.
+3. Focus only on this day's concepts.
+4. CRITICAL: Keep your question extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
 ```
 
 ---
 
-## 4. Evaluation Response Schema (JSON)
+## 4. Adaptive Question Prompt
+
+Generated dynamically by [AdaptiveQuestionBuilder.js](file:///d:/AB_Talks/Interview_Agent/src/services/promptBuilders/AdaptiveQuestionBuilder.js) when an evidence contradiction, misconception, or skill gap strategy is selected:
+
+```markdown
+Interview Topic: Day ${dayNumber} — ${dayTitle}
+Target Difficulty: ${difficulty}
+
+Candidate Profile:
+  Role       : ${jobRole}
+  Experience : ${yearsExperience} years
+  Missions   : ${missionsCompleted}
+
+Topic Context:
+  Tools      : ${toolsList}
+  Objectives :
+${objectivesList}
+
+Recent Conversation:
+${historyText}
+
+Candidate's Last Response: "${lastMessage}"
+Evaluation Notes: "${reasoningNotes}"
+${directive}
+
+REQUIRED OUTPUT FORMAT:
+Return ONLY valid JSON.
+CRITICAL: Keep the question inside the "question" field extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
+
+Required schema:
+{
+  "type": "question",
+  "question": "one interviewer question"
+}
+```
+
+---
+
+## 5. Evaluation Response Schema (JSON)
 
 Generated dynamically by [EvaluationService.js](file:///d:/AB_Talks/Interview_Agent/src/services/EvaluationService.js):
 

@@ -55,8 +55,11 @@ class CurriculumService {
       return [7, 8, 10, 11, 13, 22, 28, 31]; // Default fallback core 8 days
     }
 
+    const jobRole = (candidate.member && candidate.member.jobRole) ? candidate.member.jobRole : '';
+    const isNonTechnical = /business|marketing|analyst/i.test(jobRole);
+
     const selectedDaysSet = new Set();
-    const missions = candidate.missions;
+    const missions = candidate.missions.filter(m => !(isNonTechnical && (m.day === 28 || m.day === 29)));
 
     // 1. Select up to 2 skipped days
     const skippedMissions = missions.filter(m => m.skipped === true);
@@ -87,7 +90,9 @@ class CurriculumService {
     }
 
     // 4. Select core/capstone days to fill up (Day 7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31)
-    const coreDays = [7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31];
+    const coreDays = isNonTechnical 
+      ? [7, 8, 10, 11, 13, 21, 22, 23, 27, 31]
+      : [7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31];
     const eligibleCore = coreDays.filter(day => !selectedDaysSet.has(day));
     const shuffledCore = eligibleCore.sort(() => 0.5 - Math.random());
     let coreIndex = 0;
@@ -105,7 +110,9 @@ class CurriculumService {
     }
 
     // If still less than 8, fill with generic core days
-    const genericBackups = [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 28, 31];
+    const genericBackups = isNonTechnical
+      ? [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 31]
+      : [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 28, 31];
     let backupIndex = 0;
     while (selectedDaysSet.size < 8 && backupIndex < genericBackups.length) {
       selectedDaysSet.add(genericBackups[backupIndex]);

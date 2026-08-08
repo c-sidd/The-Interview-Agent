@@ -26,7 +26,8 @@ Instructions:
 2. Based on the Classification:
    - If "Don't Know" or "Off Topic" or "Incorrect/Unknown" or "Incorrect": Do NOT ask a deeper or harder follow-up. Instead, ask a simplified question or provide a helpful hint about the active day's objectives to guide the candidate.
    - If "Correct" or "Partially Correct": Generate a deeper, challenging follow-up question probing for technical trade-offs, configuration challenges, performance optimizations, or edge-cases.
-3. Focus only on this day's concepts. Ask only one question. Conciseness is key.
+3. Focus only on this day's concepts.
+4. CRITICAL: Keep your question extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
 
 REQUIRED OUTPUT FORMAT:
 Return ONLY valid JSON.

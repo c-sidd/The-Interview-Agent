@@ -35,7 +35,7 @@ Instructions:
 Generate an initial, open-ended technical question to assess the candidate's understanding of the tools and learning objectives listed above.
 Do not cover multiple days or other topics at once. Focus only on this day's objectives.
 Ensure the question style and depth match the candidate's experience profile (Senior vs. Junior).
-Ask only one specific question.
+CRITICAL: Keep your question extremely concise, between 20 to 40 words. Do not write long paragraphs. Ask only one specific question.
 
 REQUIRED OUTPUT FORMAT:
 Return ONLY valid JSON.
