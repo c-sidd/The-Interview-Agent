@@ -1,0 +1,94 @@
+# AI Collaboration & Engineering Log
+
+## AI Usage Philosophy
+
+This repository was developed using an AI-assisted engineering workflow. 
+
+AI was treated as a collaborative development assistant rather than an autonomous code generator. All architectural decisions, implementation validation, integration, debugging, testing, and final acceptance remained under human supervision.
+
+This log is written as an **Engineering Journal**. It records the step-by-step evolution of design decisions, considered trade-offs, and human choices. Its purpose is to allow both human reviewers and AI-based repository analysis tools to reconstruct the complete development lifecycle.
+
+---
+
+## Log Entry Template
+
+Every development milestone completed with AI assistance must add an entry to this log using the following template:
+
+```markdown
+## Entry [Milestone Number]
+
+*   **Milestone**: `MXX` (e.g., M07 - Database & Session Schema Specification)
+*   **Date**: YYYY-MM-DD
+*   **Time**: HH:MM:SS
+*   **Current Branch**: `feature/XYZ`
+
+### Problem
+[Describe the technical problem or feature request for this milestone]
+
+### Why This Problem Matters
+[Explain the business, product, or architectural impact of the problem]
+
+### Possible Approaches Considered
+1.  **Option A**: [Describe first approach, list pros/cons]
+2.  **Option B**: [Describe second approach, list pros/cons]
+
+### Chosen Solution
+[Describe the selected design path]
+
+### Why This Solution Was Selected
+[Provide the architectural reasoning for this choice]
+
+### AI Collaboration
+[Explain how the AI assistant contributed (e.g., brainstorming modular schemas, generating SDK boilerplate, suggesting linter fixes)]
+
+### Human Engineering Decisions
+*   **Decisions Made**: [Detail what you chose to implement]
+*   **Decisions Rejected**: [Detail what suggestions you rejected and why]
+*   **Manual Refinements**: [Detail manual edits made to AI-suggested code]
+
+### Files Modified
+*   `relative/path/to/file1.js`
+*   `relative/path/to/file2.js`
+
+### Git Commit
+`[Commit Hash / Tag]` (e.g., `feat: implement session database schema`)
+```
+
+---
+
+## Entry M04
+
+*   **Milestone**: `M04`
+*   **Date**: 2026-08-08
+*   **Time**: 13:02:00
+*   **Current Branch**: `main`
+
+### Problem
+Initialize version control for the project repository and prevent sensitive files (like API keys) and vendor libraries from being tracked in source control.
+
+### Why This Problem Matters
+A clean, secure repository is vital for a collaborative hackathon. Accidentally committing API keys leads to security breaches, and tracking `node_modules` causes repository bloat and dependency mismatch errors on other developer environments.
+
+### Possible Approaches Considered
+1.  **Option A**: Standard generic Node.js `.gitignore` template.
+2.  **Option B**: Targeted `.gitignore` template specifically ignoring local keys (`.env`), package modules (`node_modules`), workspace specific files, and local logs.
+
+### Chosen Solution
+Option B: Created a targeted `.gitignore` file and initialized a local Git repository in the project root.
+
+### Why This Solution Was Selected
+Provides a secure environment, preventing secret leakages, and keeps repository footprint small and relevant to the codebase.
+
+### AI Collaboration
+AI assistant drafted the `.gitignore` file structure, listing the standard exclusions for Express applications, local environment configurations, and log files.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Excluded the `.env` file explicitly, since API keys must be kept private.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Added IDE-specific configurations to make local development across different platforms robust.
+
+### Files Modified
+*   `.gitignore`
+
+### Git Commit
+`chore: initialize repository, add gitignore and project structure`
