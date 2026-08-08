@@ -287,3 +287,49 @@ AI assistant helped format the JSON schema and detail the specific instructions 
 
 ### Git Commit
 `docs: design feedback prompt evaluation schemas`
+
+---
+
+## Entry M10
+
+*   **Milestone**: `M10`
+*   **Date**: 2026-08-08
+*   **Time**: 13:31:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the data parsing and topic selection system responsible for reading synthetic curriculum and candidate profile structures, and selecting candidate-specific target days.
+
+### Why This Problem Matters
+The AI agent must evaluate candidates dynamically based on their specific curriculum days. We need a clean, structured parser that maps completed, failed, or skipped milestones to day records and selects appropriate target days.
+
+### Possible Approaches Considered
+1.  **Option A**: Reload candidate/curriculum JSON files from disk on every single HTTP conversational turn.
+2.  **Option B**: Read data files once on module instantiation and cache the parsed structures in memory to reduce server latency.
+
+### Chosen Solution
+Option B: Created `src/services/CurriculumService.js` to cache candidate/curriculum properties and expose lookup methods.
+
+### Why This Solution Was Selected
+In-memory caching of static metadata reduces file system I/O latency, making the application faster.
+
+### AI Collaboration
+AI assistant drafted the JSON file loading and object parsing boilerplate.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Designed a targeted topic-selection algorithm that extracts exactly:
+    *   1 day they passed on the first try (assessment of strength).
+    *   1 day they struggled with (attempts > 1 or passed = false).
+    *   1 day they skipped.
+    *   1 core/capstone day.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Added a robust fallback loop using a `Set` to ensure that if a candidate has no skipped or struggled days (e.g. Emily Chen), the algorithm still selects 4 unique curriculum days from available completed records.
+
+### Files Created
+*   `src/services/CurriculumService.js`
+
+### Verification & Testing
+Created a temporary test harness (`test_curriculum.js`) to load profiles and verify day picks. Confirmed that candidate CAND-001 (Sarah Johnson) and CAND-003 (Emily Chen) both result in 4 unique selected days, and that files are loaded successfully.
+
+### Git Commit
+`feat: implement curriculum service module`
