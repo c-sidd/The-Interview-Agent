@@ -159,9 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update Connection Status Badge dynamically
       const statusContainer = document.getElementById('sidebar-connection-status');
       if (data.mockMode) {
-        statusContainer.innerHTML = `<span class="status-badge mock">Offline Fallback Mock</span>`;
+        statusContainer.innerHTML = `<span class="status-badge mock">⚠️ Fallback Mode Active</span>`;
       } else {
-        statusContainer.innerHTML = `<span class="status-badge live">Live Gemini Connected</span>`;
+        statusContainer.innerHTML = `<span class="status-badge live">🟢 Gemini Connected</span>`;
       }
 
       // Populate Topics List in Sidebar
@@ -215,6 +215,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.error) {
         appendMessage('interviewer', `Error: ${data.error}`);
         return;
+      }
+
+      // Update Connection Status Badge dynamically
+      const statusContainer = document.getElementById('sidebar-connection-status');
+      if (data.mockMode) {
+        statusContainer.innerHTML = `<span class="status-badge mock">⚠️ Fallback Mode Active</span>`;
+      } else {
+        statusContainer.innerHTML = `<span class="status-badge live">🟢 Gemini Connected</span>`;
       }
 
       if (data.done) {

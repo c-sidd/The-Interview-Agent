@@ -52,7 +52,7 @@ Let's begin.`;
         activeDay: targetDays[0],
         activeDayTitle: "Initialization",
         selectedDays: selectedTopics,
-        mockMode: !this.llmService.apiKey
+        mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
       };
     }
 
@@ -202,7 +202,8 @@ Let's begin.`;
       questionCount: questionCount + 1,
       activeDay: targetDayNumber,
       activeDayTitle: dayDetails.title,
-      evaluation: evaluation
+      evaluation: evaluation,
+      mockMode: this.llmService.fallbackActive || !this.llmService.apiKey
     };
   }
 }

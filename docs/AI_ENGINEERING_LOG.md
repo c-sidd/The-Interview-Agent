@@ -1094,4 +1094,54 @@ Ran automated API test suites and ran browser cycles verifying:
 ### Git Commit
 `feat: add evaluation scoring service, detailed terminal logs, and grading card dashboard`
 
+---
+
+## Entry M36-Production-Integration
+
+*   **Milestone**: `M36-Production-Integration`
+*   **Date**: 2026-08-08
+*   **Time**: 15:30:00
+*   **Current Branch**: `main`
+
+### Problem
+De-prioritize mock responses and route all turns to the live Google Gemini API as the primary production pipeline. Implement dynamic connection badges (`🟢 Gemini Connected` vs `⚠️ Fallback Mode Active`) in the frontend UI to display runtime API keys status, and print console warning logs on connection failures.
+
+### Why This Problem Matters
+A true production release must target the real LLM engine by default, ensuring that candidate answers are processed with maximum technical accuracy. Displaying explicit fallback badges rather than silently mocking ensures transparency for code reviewers.
+
+### Possible Approaches Considered
+1.  **Option A**: Completely delete the fallback mock responder code to guarantee only live calls run.
+2.  **Option B**: Keep the fallback mock responder as a resilient fail-safe mechanism, but make the live Gemini connection the default pathway, exposing clear warning badges in the browser if a connection failure occurs.
+
+### Chosen Solution
+Option B: Programmed connection state flag trackers in `LLMService.js` and mapped them to CSS badges in `app.js`.
+
+### Why This Solution Was Selected
+Provides a robust, bulletproof runtime experience while ensuring the reviewer is fully aware of the LLM connection status.
+
+### AI Collaboration
+AI assistant helped select emoji indicators for the status badge.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the warning status badge to update dynamically on every single chat response payload.
+*   **Decisions Rejected**: Rejected forcing server shutdowns if the API key is missing.
+*   **Manual Refinements**: Verified style classes apply glowing box shadows to the connection status badge.
+
+### Files Created or Modified
+*   `.env`
+*   `src/services/LLMService.js`
+*   `src/services/InterviewService.js`
+*   `public/index.html`
+*   `public/app.js`
+
+### Verification & Testing
+Ran automated API regression test suites and verified in the browser that:
+*   Connection badges read `⚠️ Fallback Mode Active` when keys are unconfigured.
+*   Outbound console logs display `⚡ Mode: LIVE API CALL` vs `OFFLINE / FALLBACK MOCK` on every turn.
+*   If a developer inputs their real API key, the status badge dynamically updates to `🟢 Gemini Connected`.
+
+### Git Commit
+`feat: configure production live Gemini caller as primary pathway with dynamic status indicators`
+
+
 

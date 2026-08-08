@@ -8,6 +8,7 @@ class LLMService {
     this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     this.temperature = parseFloat(process.env.TEMPERATURE || '0.2');
     this.maxTokens = parseInt(process.env.MAX_TOKENS || '800');
+    this.fallbackActive = false;
 
     if (this.provider === 'gemini' && this.apiKey) {
       this.genAI = new GoogleGenerativeAI(this.apiKey);
@@ -27,6 +28,8 @@ class LLMService {
     console.log(`====================================================`);
 
     if (isMock) {
+      this.fallbackActive = true;
+      console.warn(`⚠️ [LLMService] WARNING: GEMINI_API_KEY is not set or provider is mock. Activating Mock Fallback.`);
       return this.generateMockResponse(systemPrompt, userPrompt);
     }
 
@@ -48,10 +51,12 @@ class LLMService {
       const text = responseResult.response.text();
       const elapsed = Date.now() - startTime;
       console.log(`✅ [LLMService] Gemini Success. Response: ${text.length} chars. Time: ${elapsed}ms.`);
+      this.fallbackActive = false;
       return text.trim();
     } catch (err) {
       const elapsed = Date.now() - startTime;
-      console.error(`❌ [LLMService] Gemini Error after ${elapsed}ms: ${err.message}. Falling back to mock.`);
+      console.error(`❌ [LLMService] Gemini API call failed after ${elapsed}ms: ${err.message}. Activating Fallback Mock.`);
+      this.fallbackActive = true;
       return this.generateMockResponse(systemPrompt, userPrompt);
     }
   }
