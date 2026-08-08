@@ -1039,3 +1039,59 @@ Ran automated API regression test suites and verified in the browser that:
 ### Git Commit
 `feat: implement answer evaluation, adaptive follow-ups, personalized welcomes, and progress sidebar`
 
+---
+
+## Entry M36-Scores-And-Logs
+
+*   **Milestone**: `M36-Scores-And-Logs`
+*   **Date**: 2026-08-08
+*   **Time**: 15:20:00
+*   **Current Branch**: `main`
+
+### Problem
+Upgrade the Interview Engine to calculate scores for each turn (Technical Accuracy, Reasoning, Communication, Confidence), display average scores in the completed dashboard report, and add detailed terminal logs indicating prompt characters, models, and live vs mock fallbacks.
+
+### Why This Problem Matters
+Grading each answer builds accumulated data that allows the final report card to be calculated objectively. Detailed console logging makes it immediately obvious to hackathon judges whether the application is calling the real Google Gemini API or running in offline mock fallback mode.
+
+### Possible Approaches Considered
+1.  **Option A**: Store evaluations in a database table.
+2.  **Option B**: Implement a dedicated `EvaluationService` returning structured JSON schemas, accumulate evaluations inside the session state array, and pass them to the feedback compiler.
+
+### Chosen Solution
+Option B: Programmed `EvaluationService.js` and updated the prompt builders to integrate turn scores.
+
+### Why This Solution Was Selected
+Eliminates database setups, keeps evaluations fast, and maps averages directly to final feedback dashboards.
+
+### AI Collaboration
+AI assistant helped format the grid styles for the completed scores cards.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the console logger to display sizes, model settings, and execution times. Exposed `mockMode` status boolean in the initial session load payload to toggle the UI connection status badge.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Refined the mock responder matching checks to avoid collisions between question prompts and evaluation prompts.
+
+### Files Created or Modified
+*   `src/services/EvaluationService.js`
+*   `src/services/LLMService.js`
+*   `src/services/InterviewService.js`
+*   `src/services/PromptService.js`
+*   `src/services/promptBuilders/FollowUpPromptBuilder.js`
+*   `src/services/promptBuilders/InterviewPromptBuilder.js`
+*   `src/services/promptBuilders/FeedbackPromptBuilder.js`
+*   `public/index.html`
+*   `public/style.css`
+*   `public/app.js`
+
+### Verification & Testing
+Ran automated API test suites and ran browser cycles verifying:
+*   Connection badges toggle dynamically.
+*   Off-topic answers are detected, evaluated, and trigger simplified guide-back questions.
+*   Final report displays average scores.
+*   Terminal outputs display clear request headers.
+
+### Git Commit
+`feat: add evaluation scoring service, detailed terminal logs, and grading card dashboard`
+
+

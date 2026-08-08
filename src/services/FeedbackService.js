@@ -8,7 +8,7 @@ class FeedbackService {
    * Compiles the dialogue history, queries the LLM for evaluation,
    * strips any markdown fences, parses JSON, and performs schema validation.
    */
-  async generateFeedback(candidate, dialogueHistory) {
+  async generateFeedback(candidate, dialogueHistory, evaluations = []) {
     if (!candidate) {
       throw new Error('[FeedbackService] Candidate profile is required for feedback generation.');
     }
@@ -18,7 +18,7 @@ class FeedbackService {
 
     try {
       // 1. Build prompt
-      const prompt = this.promptService.buildFeedbackPrompt(candidate, dialogueHistory);
+      const prompt = this.promptService.buildFeedbackPrompt(candidate, dialogueHistory, evaluations);
 
       // 2. Query LLM (using the evaluator instruction system prompt)
       const systemInstruction = "You are a Senior Technical Evaluator. Output ONLY a valid JSON object matching the requested schema. Do not output markdown code fences or conversational text.";
@@ -69,6 +69,21 @@ class FeedbackService {
       }
     }
 
+    // Ensure scores structure
+    if (!parsed.scores) {
+      parsed.scores = {
+        accuracy: 3.0,
+        reasoning: 3.0,
+        communication: 3.0,
+        confidence: 3.0
+      };
+    } else {
+      parsed.scores.accuracy = Number(parsed.scores.accuracy ?? 3.0);
+      parsed.scores.reasoning = Number(parsed.scores.reasoning ?? 3.0);
+      parsed.scores.communication = Number(parsed.scores.communication ?? 3.0);
+      parsed.scores.confidence = Number(parsed.scores.confidence ?? 3.0);
+    }
+
     // Validate schema
     const requiredKeys = ['summary', 'strengths', 'gaps', 'next'];
     for (const key of requiredKeys) {
@@ -91,6 +106,12 @@ class FeedbackService {
   getDefaultFeedback(reason = "") {
     return {
       summary: `The interview completed, but we could not compile a custom evaluation report. ${reason}`.trim(),
+      scores: {
+        accuracy: 3.0,
+        reasoning: 3.0,
+        communication: 3.0,
+        confidence: 3.0
+      },
       strengths: [
         "Candidate completed the cohort challenges and engaged in the technical dialogue.",
         "Able to communicate implementation approaches."

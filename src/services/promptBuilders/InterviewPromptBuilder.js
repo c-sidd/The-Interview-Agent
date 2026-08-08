@@ -1,16 +1,19 @@
 class InterviewPromptBuilder {
-  static build(dayNumber, dayTitle, tools, objectives, lastMessage = "") {
+  static build(dayNumber, dayTitle, tools, objectives, transitionAck = "") {
     const toolsList = Array.isArray(tools) ? tools.join(', ') : tools || 'None';
     const objectivesList = Array.isArray(objectives) 
       ? objectives.map(obj => `- ${obj}`).join('\n') 
       : objectives || 'None';
 
     let transitionInstruction = "";
-    if (lastMessage) {
+    if (transitionAck) {
       transitionInstruction = `
-The candidate just completed the previous topic. Their last answer was: "${lastMessage}".
-1. Briefly evaluate and acknowledge their previous answer (e.g. "Good.", "Incorrect.", "Let's move to the next topic.").
-2. Transition to the new topic.`;
+Interviewer Directives (Decoupled Transition Acknowledgment):
+- Previous Answer Acknowledgment: "${transitionAck}"
+
+Instructions:
+1. State the Acknowledgment text ("${transitionAck}") briefly and professionally at the very beginning of your response.
+2. Transition smoothly to the new topic.`;
     }
 
     return `Day to Assess: Day ${dayNumber} - ${dayTitle}

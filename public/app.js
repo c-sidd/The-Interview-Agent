@@ -126,6 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sidebar-progress-label').textContent = '0 / 8 Questions';
     document.getElementById('sidebar-topics-list').innerHTML = '<li class="upcoming"><span class="status-icon">•</span> Loading topics...</li>';
 
+    // Set Sidebar Objective Details
+    const isSenior = candidate.member.yearsExperience >= 5;
+    document.getElementById('sidebar-obj-difficulty').textContent = isSenior ? 'Senior' : 'Junior';
+    document.getElementById('sidebar-obj-role').textContent = candidate.member.jobRole;
+
     // Transition view
     selectorView.classList.remove('active');
     chatView.classList.add('active');
@@ -149,6 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.error) {
         appendMessage('interviewer', `Error starting session: ${data.error}`);
         return;
+      }
+
+      // Update Connection Status Badge dynamically
+      const statusContainer = document.getElementById('sidebar-connection-status');
+      if (data.mockMode) {
+        statusContainer.innerHTML = `<span class="status-badge mock">Offline Fallback Mock</span>`;
+      } else {
+        statusContainer.innerHTML = `<span class="status-badge live">Live Gemini Connected</span>`;
       }
 
       // Populate Topics List in Sidebar
@@ -273,6 +286,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function showFeedback(feedback) {
     chatView.classList.remove('active');
     feedbackView.classList.add('active');
+
+    // Fill Scores
+    const scores = feedback.scores || { accuracy: 3.0, reasoning: 3.0, communication: 3.0, confidence: 3.0 };
+    document.getElementById('score-accuracy').textContent = Number(scores.accuracy).toFixed(1);
+    document.getElementById('score-reasoning').textContent = Number(scores.reasoning).toFixed(1);
+    document.getElementById('score-communication').textContent = Number(scores.communication).toFixed(1);
+    document.getElementById('score-confidence').textContent = Number(scores.confidence).toFixed(1);
 
     // Fill Summary
     feedbackSummary.textContent = feedback.summary;

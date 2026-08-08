@@ -8,16 +8,17 @@ class PromptService {
     return SystemPromptBuilder.build(candidate);
   }
 
-  buildQuestionPrompt(dayNumber, dayTitle, tools, objectives, turnNumber, dialogueHistory, lastMessage) {
+  buildQuestionPrompt(dayNumber, dayTitle, tools, objectives, turnNumber, dialogueHistory, lastMessage, evaluation) {
     if (parseInt(turnNumber) === 1) {
-      return InterviewPromptBuilder.build(dayNumber, dayTitle, tools, objectives, lastMessage);
+      const transitionAck = evaluation ? evaluation.acknowledgmentText : "";
+      return InterviewPromptBuilder.build(dayNumber, dayTitle, tools, objectives, transitionAck);
     } else {
-      return FollowUpPromptBuilder.build(dayNumber, dayTitle, dialogueHistory, lastMessage);
+      return FollowUpPromptBuilder.build(dayNumber, dayTitle, dialogueHistory, lastMessage, evaluation);
     }
   }
 
-  buildFeedbackPrompt(candidate, dialogueHistory) {
-    return FeedbackPromptBuilder.build(candidate, dialogueHistory);
+  buildFeedbackPrompt(candidate, dialogueHistory, evaluations) {
+    return FeedbackPromptBuilder.build(candidate, dialogueHistory, evaluations);
   }
 }
 

@@ -1,3 +1,5 @@
+const EvaluationService = require('./EvaluationService');
+
 class InterviewService {
   constructor(sessionService, curriculumService, promptService, llmService, feedbackService) {
     this.sessionService = sessionService;
@@ -5,6 +7,7 @@ class InterviewService {
     this.promptService = promptService;
     this.llmService = llmService;
     this.feedbackService = feedbackService;
+    this.evaluationService = new EvaluationService();
   }
 
   /**
@@ -48,7 +51,8 @@ Let's begin.`;
         questionCount: 0,
         activeDay: targetDays[0],
         activeDayTitle: "Initialization",
-        selectedDays: selectedTopics
+        selectedDays: selectedTopics,
+        mockMode: !this.llmService.apiKey
       };
     }
 
@@ -70,22 +74,65 @@ Let's begin.`;
       };
     }
 
+    const { questionCount, selectedDays, currentDayIndex, currentDayTurn, candidate } = session;
+
+    // 1. Evaluate candidate's last response if they just answered a question
+    let evaluation = null;
+    let lastQuestion = "";
+    
+    if (questionCount > 0 && message) {
+      // Find the last model message in history
+      if (session.history.length > 0) {
+        for (let i = session.history.length - 1; i >= 0; i--) {
+          if (session.history[i].role === 'model') {
+            lastQuestion = session.history[i].content;
+            break;
+          }
+        }
+      }
+
+      if (lastQuestion) {
+        const targetDayObj = selectedDays[currentDayIndex];
+        const activeDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
+        const activeDayDetails = this.curriculumService.getDayDetails(activeDayNumber);
+        
+        console.log(`[InterviewService] Evaluating answer for Day ${activeDayNumber} (${activeDayDetails.title})...`);
+        evaluation = await this.evaluationService.evaluateAnswer(
+          activeDayNumber,
+          activeDayDetails.title,
+          activeDayDetails.tools,
+          activeDayDetails.objectives,
+          lastQuestion,
+          message
+        );
+
+        if (!session.evaluations) {
+          session.evaluations = [];
+        }
+        session.evaluations.push({
+          day: activeDayNumber,
+          title: activeDayDetails.title,
+          question: lastQuestion,
+          answer: message,
+          evaluation: evaluation
+        });
+      }
+    }
+
     // Append the candidate's response to history
     if (message) {
       session.history.push({ role: "user", content: message });
     }
 
-    const { questionCount, selectedDays, currentDayIndex, currentDayTurn, candidate } = session;
-
-    // Check if the candidate has just answered the 8th question (Turn 9)
+    // Check if the candidate has completed all 8 questions (Turn 9)
     if (questionCount >= 8) {
       console.log(`[InterviewService] Interview complete for session ${sessionId}. Compiling final feedback report.`);
       
-      // Call FeedbackService to compile structured report card
-      const feedback = await this.feedbackService.generateFeedback(candidate, session.history);
+      // Call FeedbackService to compile structured report card, passing accumulated evaluations
+      const feedback = await this.feedbackService.generateFeedback(candidate, session.history, session.evaluations || []);
       
       // Update session state
-      this.sessionService.updateSession(sessionId, { feedback });
+      this.sessionService.updateSession(sessionId, { feedback, evaluations: session.evaluations || [] });
 
       return {
         reply: "Thank you. Your interview has concluded. We are compiling your feedback.",
@@ -110,7 +157,8 @@ Let's begin.`;
       }
     }
 
-    const targetDayNumber = selectedDays[activeDayIndex];
+    const targetDayObj = selectedDays[activeDayIndex];
+    const targetDayNumber = (targetDayObj && typeof targetDayObj === 'object') ? targetDayObj.day : targetDayObj;
     const dayDetails = this.curriculumService.getDayDetails(targetDayNumber);
 
     if (!dayDetails) {
@@ -129,7 +177,8 @@ Let's begin.`;
       dayDetails.objectives,
       activeDayTurn,
       session.history,
-      message || ""
+      message || "",
+      evaluation
     );
 
     // Call LLM Service
@@ -143,7 +192,8 @@ Let's begin.`;
     this.sessionService.updateSession(sessionId, {
       questionCount: questionCount + 1,
       currentDayIndex: activeDayIndex,
-      currentDayTurn: activeDayTurn
+      currentDayTurn: activeDayTurn,
+      evaluations: session.evaluations || []
     });
 
     return {
@@ -151,7 +201,8 @@ Let's begin.`;
       done: false,
       questionCount: questionCount + 1,
       activeDay: targetDayNumber,
-      activeDayTitle: dayDetails.title
+      activeDayTitle: dayDetails.title,
+      evaluation: evaluation
     };
   }
 }

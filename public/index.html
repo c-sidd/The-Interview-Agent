@@ -53,6 +53,22 @@
           <div class="sidebar-detail">Exp: <span id="sidebar-cand-exp">9 Years</span></div>
         </div>
 
+        <div class="sidebar-objective-card">
+          <h4>Interview Objective</h4>
+          <div class="objective-item">
+            <span class="obj-label">Difficulty:</span>
+            <span id="sidebar-obj-difficulty" class="badge">Senior</span>
+          </div>
+          <div class="objective-item">
+            <span class="obj-label">Target Role:</span>
+            <span id="sidebar-obj-role" class="obj-val">AI Engineer</span>
+          </div>
+          <div class="objective-item">
+            <span class="obj-label">Est. Time:</span>
+            <span class="obj-val">12–15 Minutes</span>
+          </div>
+        </div>
+
         <div class="sidebar-progress-section">
           <h4>Interview Progress</h4>
           <!-- Progress Bar -->
@@ -67,6 +83,13 @@
           <ul id="sidebar-topics-list" class="sidebar-topics-list">
             <!-- Dynamically populated -->
           </ul>
+        </div>
+
+        <div class="sidebar-status-section" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+          <h4>Connection Status</h4>
+          <div id="sidebar-connection-status">
+            <span class="status-badge mock">Offline Fallback Mock</span>
+          </div>
         </div>
       </div>
 
@@ -122,6 +145,26 @@
       </div>
 
       <div class="feedback-card">
+        <!-- Evaluation Scores Grid -->
+        <div class="feedback-scores-grid">
+          <div class="score-card">
+            <div class="score-title">Technical Accuracy</div>
+            <div class="score-val"><span id="score-accuracy">0.0</span> / 5</div>
+          </div>
+          <div class="score-card">
+            <div class="score-title">Reasoning & Logic</div>
+            <div class="score-val"><span id="score-reasoning">0.0</span> / 5</div>
+          </div>
+          <div class="score-card">
+            <div class="score-title">Communication Clarity</div>
+            <div class="score-val"><span id="score-communication">0.0</span> / 5</div>
+          </div>
+          <div class="score-card">
+            <div class="score-title">Response Confidence</div>
+            <div class="score-val"><span id="score-confidence">0.0</span> / 5</div>
+          </div>
+        </div>
+
         <!-- Summary Segment -->
         <div class="feedback-section">
           <h3>Overall Summary</h3>
