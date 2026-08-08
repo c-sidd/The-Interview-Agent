@@ -48,7 +48,7 @@ class LLMService {
    * Generates realistic, context-aware mock answers when offline or keys are missing.
    */
   generateMockResponse(systemPrompt, userPrompt) {
-    // Check if the user prompt is a final feedback request
+    // 1. Check if the user prompt is a final feedback request
     if (userPrompt.includes('JSON Schema') || userPrompt.includes('Feedback report')) {
       return JSON.stringify({
         summary: "The candidate demonstrated solid technical understanding of the cohort curriculum. They answered questions on databases, prompt techniques, and agents accurately.",
@@ -67,21 +67,22 @@ class LLMService {
       }, null, 2);
     }
 
-    // Check if the prompt relates to specific days to return realistic questions
-    if (userPrompt.includes('Day 1 -') || userPrompt.includes('Day 1 ')) {
-      return "For Day 1, you configured a Python environment. Can you explain the difference between a global Python installation and a virtual environment (.venv) configured for a project, and why the virtual environment is preferred?";
-    }
-    if (userPrompt.includes('Day 10 -') || userPrompt.includes('Day 10 ')) {
-      return "For Day 10, you built a Retrieval Engine. How did you structure your query router to decide whether a user query should be sent to SQLite or ChromaDB vector search?";
-    }
-    if (userPrompt.includes('Day 22 -') || userPrompt.includes('Day 22 ')) {
-      return "For Day 22, you studied Multi-Agent Orchestration. What communication protocol or message routing strategy did you use to pass state between specialized agents in a Graph?";
-    }
-    if (userPrompt.includes('Day 28 -') || userPrompt.includes('Day 28 ')) {
-      return "For Day 28, you containerized your application. What issues did you face with the local caching directory mapping when running your FastAPI inside a Docker container, and how did you configure the volume?";
+    // 2. Extract active day and topic details from compile prompts
+    const dayMatch = userPrompt.match(/Day (\d+)\s*-\s*([^\n\r\.]+)/i);
+    const isFollowUp = userPrompt.includes('follow-up turn') || userPrompt.includes('Candidate\'s Last Message');
+
+    if (dayMatch) {
+      const dayNum = dayMatch[1];
+      const dayTitle = dayMatch[2].trim();
+
+      if (isFollowUp) {
+        return `Thanks for sharing details about your Day ${dayNum} (${dayTitle}) setup. Can you explain the main trade-offs, constraints, or configuration issues you faced during this implementation?`;
+      } else {
+        return `Let's discuss Day ${dayNum} which focused on "${dayTitle}". Can you outline the primary tools you used and explain how you achieved the learning objectives for this module?`;
+      }
     }
 
-    // Default conversational follow-up fallback
+    // 3. Fallback mock answer if no day tags match
     return "That's a sound explanation. Could you go deeper into the trade-offs of that approach and discuss how you would configure it for high concurrency?";
   }
 }
