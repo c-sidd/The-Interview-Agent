@@ -421,3 +421,45 @@ Created a temporary test script (`test_prompt.js`) to compile prompts for turn 1
 
 ### Git Commit
 `feat: implement segregated prompt service and builder sub-classes`
+
+---
+
+## Entry M13
+
+*   **Milestone**: `M13`
+*   **Date**: 2026-08-08
+*   **Time**: 14:07:00
+*   **Current Branch**: `main`
+
+### Problem
+Build the LLM wrapper service responsible for connecting to the Google Generative AI SDK, checking API configurations, and providing a robust mock fallback for offline validation.
+
+### Why This Problem Matters
+If the server makes direct calls to Gemini, it depends entirely on network connections, API limits, and valid credentials. A mock fallback allows development and automated testing to continue offline when the keys are missing or the API limits are exceeded.
+
+### Possible Approaches Considered
+1.  **Option A**: Write raw Gemini API SDK calls inside the routing layer, returning standard HTTP errors if keys are missing.
+2.  **Option B**: Build a unified wrapper `src/services/LLMService.js` that checks for environmental variables and defaults to a local mock generator if no key is present.
+
+### Chosen Solution
+Option B: Implemented the `LLMService` class with a mock responder fallback.
+
+### Why This Solution Was Selected
+Maintains the provider-agnostic abstraction pattern and ensures that the application remains fully testable without active API keys.
+
+### AI Collaboration
+AI assistant helped write the Gemini SDK `getGenerativeModel` initialization and generated mock interview response templates.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the mock feedback responder to output valid JSON matching the target schema, preventing JSON parsing crashes.
+*   **Decisions Rejected**: Rejected incorporating multiple cloud API providers (GPT/Claude) in the initial code to keep dependencies minimal, relying on the environment configuration to swap them out.
+*   **Manual Refinements**: Sanitized the returned LLM string responses using `.trim()` to remove leading/trailing whitespaces.
+
+### Files Created
+*   `src/services/LLMService.js`
+
+### Verification & Testing
+Created a temporary test script (`test_llm.js`) and verified that under `mock` mode the service returns realistic questions for Day 1, 10, 22, and 28, and generates valid JSON feedback reports.
+
+### Git Commit
+`feat: implement LLM service client wrapper with mock fallback`
