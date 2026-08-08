@@ -463,3 +463,45 @@ Created a temporary test script (`test_llm.js`) and verified that under `mock` m
 
 ### Git Commit
 `feat: implement LLM service client wrapper with mock fallback`
+
+---
+
+## Entry M14
+
+*   **Milestone**: `M14`
+*   **Date**: 2026-08-08
+*   **Time**: 14:09:00
+*   **Current Branch**: `main`
+
+### Problem
+Build an offline simulation framework to run full conversational loops, testing how the System Prompt, Curriculum Questions, and Evaluation Prompts are compiled and parsed before launching the HTTP server.
+
+### Why This Problem Matters
+Testing prompt engineering manually by copying/pasting strings is slow and prone to human error. Programmatically running full dialogue turns offline lets developers catch syntax mismatches, missing fields, or API response errors early.
+
+### Possible Approaches Considered
+1.  **Option A**: Conduct manual prompt testing inside Google AI Studio.
+2.  **Option B**: Create a dedicated node script `src/services/test_prompts.js` that coordinates Curriculum, Prompt, and LLM services to run offline multi-turn simulations automatically.
+
+### Chosen Solution
+Option B: Created `src/services/test_prompts.js` to simulate conversational loops and parse prompt outputs.
+
+### Why This Solution Was Selected
+Provides a repeatable verification method, validating that all components work together correctly.
+
+### AI Collaboration
+AI assistant drafted the test orchestrator outline and simulated candidate answers.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the simulation to use candidate CAND-001 (Sarah Johnson), as her Senior Data Engineer status tests the experience-level conditional prompts.
+*   **Decisions Rejected**: None.
+*   **Manual Refinements**: Added try/catch JSON parsing checks on the mock evaluation outputs to ensure it parses successfully.
+
+### Files Created
+*   `src/services/test_prompts.js`
+
+### Verification & Testing
+Ran `node src/services/test_prompts.js` in the project root. Confirmed that selected days, system prompts, initial/follow-up questions, and final evaluations parse and execute correctly.
+
+### Git Commit
+`test: add offline prompt simulation and validation test script`
