@@ -170,3 +170,42 @@ AI assistant helped structure the pipeline steps and outline the service boundar
 
 ### Git Commit
 `docs: design interview engine request processing pipeline`
+
+---
+
+## Entry M07
+
+*   **Milestone**: `M07`
+*   **Date**: 2026-08-08
+*   **Time**: 13:11:00
+*   **Current Branch**: `main`
+
+### Problem
+Define the session variables, dialogue history schemas, active topic counters, and transition conditions required for managing stateful interviews.
+
+### Why This Problem Matters
+HTTP is stateless, meaning the backend has to reconstruct the session state on every turn using `sessionId`. Having a clear schema prevents database model errors.
+
+### Possible Approaches Considered
+1.  **Option A**: Store only the dialogue history array and ask the LLM to count questions and decide what topics to cover dynamically.
+2.  **Option B**: Enforce structured properties (questionCount, selectedDays, currentDayIndex, currentDayTurn) in session state to guarantee strict compliance with curriculum rules and question limits.
+
+### Chosen Solution
+Option B: Created `docs/SESSION_SCHEMA.md` defining session properties and state transitions.
+
+### Why This Solution Was Selected
+Explicit session variables prevent prompt drift and guarantee that exactly 8 questions are asked across 4 curriculum days (2 questions per day).
+
+### AI Collaboration
+AI assistant drafted the state model properties and formatted the transition table.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Added `createdAt` and `lastActive` timestamps to support automatic session timeout cleanups on the server.
+*   **Decisions Rejected**: Rejected saving the session to a file database (like SQLite), choosing an in-memory Map instead to minimize latency.
+*   **Manual Refinements**: Refined the transition layout to show step-by-step changes from Turn 0 (Session Initialization) to Turn 9 (Feedback Compilation).
+
+### Files Modified
+*   `docs/SESSION_SCHEMA.md`
+
+### Git Commit
+`docs: specify session schema and state structures`
