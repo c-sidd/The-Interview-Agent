@@ -673,3 +673,46 @@ Validated that the controller handles missing session IDs and returns appropriat
 
 ### Git Commit
 `feat: implement interview controller with input validation`
+
+---
+
+## Entry M19
+
+*   **Milestone**: `M19`
+*   **Date**: 2026-08-08
+*   **Time**: 14:28:00
+*   **Current Branch**: `main`
+
+### Problem
+Map the REST endpoints (specifically `POST /api/interview`) to the Express routing controller pipeline and mount it within the application routing tree.
+
+### Why This Problem Matters
+Binds the HTTP route configurations to the active controller instances. Having a dedicated routes module separates endpoint declarations from boot loaders.
+
+### Possible Approaches Considered
+1.  **Option A**: Define route endpoints directly in `server.js`.
+2.  **Option B**: Create a dedicated `src/routes/interviewRoutes.js` file and mount it in `server.js` using middleware pipelines.
+
+### Chosen Solution
+Option B: Created `src/routes/interviewRoutes.js` and mounted it under `/api` in `server.js`.
+
+### Why This Solution Was Selected
+Separates server boot orchestration from API route configurations, improving code structure.
+
+### AI Collaboration
+AI assistant drafted the router setup imports and export conventions.
+
+### Human Engineering Decisions
+*   **Decisions Made**: Configured the route handler to dynamically instantiate the controller using the shared service cached on the app object context (`req.app.get('interviewService')`).
+*   **Decisions Rejected**: Rejected hardcoding service instances inside routers, preventing dependency injection issues.
+*   **Manual Refinements**: Mounts the endpoints cleanly under `/api/interview`.
+
+### Files Created or Modified
+*   `src/routes/interviewRoutes.js`
+*   `server.js`
+
+### Verification & Testing
+Ensured the router imports compile cleanly and the server boots without module resolution issues.
+
+### Git Commit
+`feat: mount interview routes to Express application`

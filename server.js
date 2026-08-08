@@ -47,9 +47,9 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Import and mount routes (to be implemented in Milestone 19)
-// const interviewRoutes = require('./src/routes/interviewRoutes');
-// app.use('/api', interviewRoutes);
+// Import and mount routes
+const interviewRoutes = require('./src/routes/interviewRoutes');
+app.use('/api', interviewRoutes);
 
 // Start the Express listener
 const server = app.listen(PORT, () => {
