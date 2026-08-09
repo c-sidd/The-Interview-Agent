@@ -3,9 +3,9 @@ require('dotenv').config();
 
 class LLMService {
   constructor() {
-    this.provider = process.env.LLM_PROVIDER || 'gemini';
+    this.provider = process.env.LLM_PROVIDER || 'groq';
     this.apiKey = this.provider === 'groq' ? (process.env.GROQ_API_KEY || '') : (process.env.GEMINI_API_KEY || '');
-    this.modelName = this.provider === 'groq' ? (process.env.GROQ_MODEL || 'qwen/qwen3.6-27b') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash');
+    this.modelName = this.provider === 'groq' ? (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash');
     this.temperature = parseFloat(process.env.TEMPERATURE || '0.2');
     this.maxTokens = parseInt(process.env.MAX_TOKENS || '800');
     this.fallbackActive = false;

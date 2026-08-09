@@ -9,62 +9,136 @@ class CurriculumService {
   }
 
   loadData() {
+    this.candidatesLoadError = null;
+    this.curriculumLoadError = null;
+
     try {
+      if (!fs.existsSync(this.candidatesPath)) {
+        throw new Error('candidates.json file is missing from path ' + this.candidatesPath);
+      }
       const candidatesRaw = fs.readFileSync(this.candidatesPath, 'utf8');
-      this.candidatesData = JSON.parse(candidatesRaw).candidates;
+      if (!candidatesRaw.trim()) {
+        throw new Error('candidates.json file is empty');
+      }
+      const parsed = JSON.parse(candidatesRaw);
+      if (!parsed || !Array.isArray(parsed.candidates)) {
+        throw new Error('candidates.json is missing required "candidates" array');
+      }
+      this.candidatesData = parsed.candidates;
     } catch (err) {
-      console.error(`Error loading candidates.json: ${err.message}`);
+      this.candidatesLoadError = `Failed to load candidates data: ${err.message}`;
       this.candidatesData = [];
+      console.error(this.candidatesLoadError);
     }
 
     try {
+      if (!fs.existsSync(this.curriculumPath)) {
+        throw new Error('curriculum.json file is missing from path ' + this.curriculumPath);
+      }
       const curriculumRaw = fs.readFileSync(this.curriculumPath, 'utf8');
-      this.curriculumData = JSON.parse(curriculumRaw);
+      if (!curriculumRaw.trim()) {
+        throw new Error('curriculum.json file is empty');
+      }
+      const parsed = JSON.parse(curriculumRaw);
+      if (!parsed || !Array.isArray(parsed.days)) {
+        throw new Error('curriculum.json is missing required "days" array');
+      }
+      this.curriculumData = parsed;
     } catch (err) {
-      console.error(`Error loading curriculum.json: ${err.message}`);
+      this.curriculumLoadError = `Failed to load curriculum data: ${err.message}`;
       this.curriculumData = { cohort: '', modules: [], days: [] };
+      console.error(this.curriculumLoadError);
     }
   }
 
   getCandidates() {
+    this.loadData(); // reload dynamically on request
+    if (this.candidatesLoadError) {
+      throw new Error(this.candidatesLoadError);
+    }
     return this.candidatesData;
   }
 
   getCandidateById(candidateId) {
+    this.loadData(); // reload dynamically on request
+    if (this.candidatesLoadError) {
+      throw new Error(this.candidatesLoadError);
+    }
     return this.candidatesData.find(c => c.member.id === candidateId) || null;
   }
 
   getCurriculum() {
+    this.loadData(); // reload dynamically on request
+    if (this.curriculumLoadError) {
+      throw new Error(this.curriculumLoadError);
+    }
     return this.curriculumData;
   }
 
   getDayDetails(dayNumber) {
+    this.loadData(); // reload dynamically on request
+    if (this.curriculumLoadError) {
+      throw new Error(this.curriculumLoadError);
+    }
     if (!this.curriculumData || !this.curriculumData.days) return null;
     return this.curriculumData.days.find(d => d.day === parseInt(dayNumber)) || null;
   }
 
   /**
-   * Programmatically selects 4 unique curriculum days for the candidate:
-   * 1. A day they passed on the first try (strength).
-   * 2. A day they struggled with (high attempts or passed = false).
-   * 3. A day they skipped.
-   * 4. A core/capstone day.
+   * Programmatically selects 8 unique curriculum days for the candidate:
+   * 1. Skipped days (up to 2).
+   * 2. Struggled days (up to 2).
+   * 3. Strength days (up to 2).
+   * 4. Dynamic core days to fill up.
    */
   selectTargetDays(candidate) {
-    if (!candidate || !candidate.missions) {
-      return [7, 8, 10, 11, 13, 22, 28, 31]; // Default fallback core 8 days
+    this.loadData(); // reload dynamically on request
+    if (this.curriculumLoadError) {
+      throw new Error(this.curriculumLoadError);
+    }
+
+    // Dynamically retrieve all available, valid day numbers from curriculum.json
+    const allAvailableDays = (this.curriculumData.days || []).map(d => d.day);
+    
+    if (allAvailableDays.length === 0) {
+      throw new Error('Curriculum has no day objectives defined');
     }
 
     const jobRole = (candidate.member && candidate.member.jobRole) ? candidate.member.jobRole : '';
     const isNonTechnical = /business|marketing|analyst/i.test(jobRole);
 
+    // Dynamic checks if a day is an infrastructure day
+    const isInfrastructureDay = (dayNum) => {
+      const details = this.getDayDetails(dayNum);
+      if (!details) return false;
+      const tools = details.tools || [];
+      const objectives = details.objectives || [];
+      const regex = /docker|kubernetes|k8s|deployment|infrastructure|ci\/cd|terraform/i;
+      const titleMatch = regex.test(details.title || '');
+      const toolsMatch = tools.some(t => regex.test(t));
+      const objectivesMatch = objectives.some(obj => regex.test(obj));
+      return titleMatch || toolsMatch || objectivesMatch;
+    };
+
+    // Filter valid days (must exist in curriculum.json)
+    const validDays = allAvailableDays.filter(dayNum => this.getDayDetails(dayNum) !== null);
+
+    // Apply role-based filtering dynamically
+    const eligibleDays = validDays.filter(dayNum => !isNonTechnical || !isInfrastructureDay(dayNum));
+
+    if (eligibleDays.length === 0) {
+      throw new Error('No eligible curriculum days found for this candidate profile');
+    }
+
     const selectedDaysSet = new Set();
-    const missions = candidate.missions.filter(m => !(isNonTechnical && (m.day === 28 || m.day === 29)));
+    const candidateMissions = candidate.missions || [];
+
+    // Filter candidate missions to only include eligible days
+    const missions = candidateMissions.filter(m => eligibleDays.includes(m.day));
 
     // 1. Select up to 2 skipped days
     const skippedMissions = missions.filter(m => m.skipped === true);
     if (skippedMissions.length > 0) {
-      // Shuffle skipped
       const shuffled = skippedMissions.sort(() => 0.5 - Math.random());
       shuffled.slice(0, 2).forEach(m => selectedDaysSet.add(m.day));
     }
@@ -89,11 +163,8 @@ class CurriculumService {
       shuffled.slice(0, 2).forEach(m => selectedDaysSet.add(m.day));
     }
 
-    // 4. Select core/capstone days to fill up (Day 7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31)
-    const coreDays = isNonTechnical 
-      ? [7, 8, 10, 11, 13, 21, 22, 23, 27, 31]
-      : [7, 8, 10, 11, 13, 21, 22, 23, 27, 28, 31];
-    const eligibleCore = coreDays.filter(day => !selectedDaysSet.has(day));
+    // 4. Fill up selection up to 8 unique days using eligibleDays from curriculum
+    const eligibleCore = eligibleDays.filter(day => !selectedDaysSet.has(day));
     const shuffledCore = eligibleCore.sort(() => 0.5 - Math.random());
     let coreIndex = 0;
     while (selectedDaysSet.size < 8 && coreIndex < shuffledCore.length) {
@@ -101,24 +172,18 @@ class CurriculumService {
       coreIndex++;
     }
 
-    // Fallback: If we don't have 8 unique days, fill from the candidate's completed days
-    const allMissionsDays = missions.map(m => m.day);
-    let index = 0;
-    while (selectedDaysSet.size < 8 && index < allMissionsDays.length) {
-      selectedDaysSet.add(allMissionsDays[index]);
-      index++;
+    // If still less than 8, fallback to fill with any validDays (even if they are infrastructure days)
+    if (selectedDaysSet.size < 8) {
+      const remainingValid = validDays.filter(day => !selectedDaysSet.has(day));
+      const shuffledRemaining = remainingValid.sort(() => 0.5 - Math.random());
+      let remIndex = 0;
+      while (selectedDaysSet.size < 8 && remIndex < shuffledRemaining.length) {
+        selectedDaysSet.add(shuffledRemaining[remIndex]);
+        remIndex++;
+      }
     }
 
-    // If still less than 8, fill with generic core days
-    const genericBackups = isNonTechnical
-      ? [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 31]
-      : [7, 8, 10, 11, 12, 13, 16, 21, 22, 23, 27, 28, 31];
-    let backupIndex = 0;
-    while (selectedDaysSet.size < 8 && backupIndex < genericBackups.length) {
-      selectedDaysSet.add(genericBackups[backupIndex]);
-      backupIndex++;
-    }
-
+    // Ensure we return an array of up to 8 unique days
     return Array.from(selectedDaysSet).slice(0, 8);
   }
 }

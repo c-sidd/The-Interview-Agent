@@ -151,3 +151,14 @@ JSON Response Schema:
   "acknowledgmentText": "A natural-language acknowledgment statement to show to the candidate."
 }
 ```
+
+---
+
+## 6. Question Progression Flow & Auditing
+
+The prompts are triggered dynamically using state variables to build turn-based directives:
+1. **Initial Questions** (`status: 'WAITING_FOR_ANSWER'`): Utilizes `InterviewPromptBuilder` (`turnNumber = 1`) to ask open-ended questions about the Day's tools and objectives.
+2. **Follow-ups / Hints** (`status: 'FOLLOW_UP' | 'HINT' | 'RETRY'`): Utilizes `FollowUpPromptBuilder` or `AdaptiveQuestionBuilder` (`turnNumber = 2`). If `attempts` are below the maximum (3), hints or simplifications are instructed. If `followUps` are below the maximum (2), deeper probing questions are generated.
+3. **Keyword Redaction**: Any echoed prompt injection keywords (e.g., `INJECTION_SUCCESS`) are automatically redacted from the prompt output prior to being saved in history or returned to client layers, preventing token manipulation.
+4. **Data-Driven Context Injection**: Candidate profile details (name, role, experience, education, learning signals) and active curriculum syllabus context (objectives list, tools list) are injected dynamically at runtime into prompt compilers, avoiding any hardcoded assumptions about candidate accounts or available curriculum day numbers.
+

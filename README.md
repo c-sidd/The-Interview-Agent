@@ -24,7 +24,7 @@ This platform evaluates cohort candidates dynamically by mapping their progress 
 
 *   **Backend**: Node.js & Express.js (serving API endpoints and static assets).
 *   **Frontend**: Vanilla HTML5, CSS3 (CSS Custom Variables, Flexbox, CSS Grid), and modern JavaScript.
-*   **AI Model**: Google Gemini 2.5 Flash (default, abstracted).
+*   **AI Model**: Groq Llama 3.3 70B (default, abstracted).
 *   **Session State Store**: In-Memory JavaScript `Map` cache (with 30-minute inactive session garbage collection sweeps).
 *   **Context Strategy**: Programmatic JSON Context Injection (injects curriculum syllabus details directly into compiler prompts, avoiding RAG latency).
 
@@ -77,6 +77,23 @@ Interview_Agent/
 ├── test_api.js                       # HTTP server integration test suite
 └── test_edge_cases.js                # Validation and prompt injection safety test runner
 ```
+
+---
+
+## 📊 Data-Driven Candidates & Curriculum
+
+The platform operates entirely based on dynamic data files without hardcoded candidate listings or curriculum day references:
+
+### 1. Dynamic Candidates (`candidates.json`)
+*   **Source of Truth**: All candidate accounts, years of experience, target job roles, education, signal records, and mission histories are loaded directly from [candidates.json](file:///d:/AB_Talks/Interview_Agent/candidates.json).
+*   **Adding a Candidate**: Simply append a new candidate JSON object to the `candidates` array. The frontend candidate selector grid automatically renders them on page reload without restarting the Node server.
+*   **Personalized Routing**: The interview dynamically tailors System Prompts, objectives, and adaptive question structures using the candidate's custom attributes.
+
+### 2. Dynamic Curriculum (`curriculum.json`)
+*   **Source of Truth**: The curriculum modules, Day counts, titles, tools list, and learning objectives are loaded directly from [curriculum.json](file:///d:/AB_Talks/Interview_Agent/curriculum.json).
+*   **Adding Curriculum Days**: Simply append a new day object to the `days` array in `curriculum.json`. The Curriculum Service will automatically discover it on the next interview load.
+*   **Dynamic Infrastructure Day Filtering**: Infrastructure days (e.g. Docker, Kubernetes, CI/CD) are filtered out for non-technical candidates (e.g. Business Analysts) dynamically by checking the day title, tools, and objectives against regex patterns instead of hardcoded day numbers.
+*   **Error Handling**: If a JSON file is missing, empty, or malformed, the platform catches the error and surfaces a descriptive message in the UI instead of crashing.
 
 ---
 

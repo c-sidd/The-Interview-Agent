@@ -284,7 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.mockMode) {
         statusContainer.innerHTML = `<span class="status-badge mock">⚠️ Fallback Mode Active</span>`;
       } else {
-        statusContainer.innerHTML = `<span class="status-badge live">🟢 Gemini Connected</span>`;
+        const providerName = data.provider ? (data.provider.charAt(0).toUpperCase() + data.provider.slice(1)) : 'AI';
+        statusContainer.innerHTML = `<span class="status-badge live">🟢 ${providerName} Connected</span>`;
       }
 
       // Populate Topics List in Sidebar

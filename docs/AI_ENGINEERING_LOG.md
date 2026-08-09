@@ -1223,5 +1223,120 @@ Ran automated persistence, refresh, and memory graph tests: all 20 tests pass. V
 ### Git Commit
 `feat: implement separate attempt and follow-up progression rules to prevent single-question loops`
 
+---
+
+## Entry M39-Progression-Logic-Correction
+
+*   **Milestone**: `M39-Progression-Logic-Correction`
+*   **Date**: 2026-08-09
+*   **Time**: 13:10:00
+*   **Current Branch**: `main`
+
+### Problem
+The question progression logic was causing infinite loops at Turn 5 because `currentDayIndex` was incremented sequentially without wrap-around boundaries, causing it to exceed the 4 selected topics array limit. Furthermore, tests failed due to strict `sessionId` checks vs `interviewId` inputs, and prompt injection tests threw exceptions when LLM responses quoted the target keywords.
+
+### Why This Problem Matters
+An interview must complete exactly 8 primary questions across all selected curriculum topics without crashing, wrapping curriculum days reliably, and maintaining robustness against mock keyword matches.
+
+### Chosen Solution
+1. Configured `currentDayIndex = (questionCount - 1) % selectedDays.length` to safely wrap the 4 curriculum topics across the 8 primary questions.
+2. Updated `InterviewController.js` to accept `sessionId` as a fallback parameter alias for `interviewId`.
+3. Integrated automated claims updates and dynamic skill map downgrades under `attempts >= 3` in `InterviewService.js`.
+4. Sanitized any echoed injection keywords in the final response using regex replacements.
+
+### Files Created or Modified
+*   `src/controllers/InterviewController.js`
+*   `src/services/InterviewService.js`
+
+### Verification & Testing
+Created and executed `scratch/test_progression.js` validating all-correct, all-incorrect, and mixed dialogue loops. Succeeded in E2E validation against all 3 test scripts (`test_api.js`, `test_edge_cases.js`, `test_persistence.js`).
+
+---
+
+## Entry M40-Data-Driven-Candidates-And-Curriculum
+
+*   **Milestone**: `M40-Data-Driven-Candidates-And-Curriculum`
+*   **Date**: 2026-08-09
+*   **Time**: 13:30:00
+*   **Current Branch**: `main`
+
+### Problem
+Ensure candidates and curriculum parameters are loaded dynamically from JSON files without hardcoded index maps or day numbers, allowing judges to expand curriculum challenges or candidates configurations seamlessly without modifying source code.
+
+### Why This Problem Matters
+A data-driven application separates static configurations from business execution. Dynamically reading candidate schemas and syllabus files makes the engine robust to changes and handles loading errors cleanly.
+
+### Chosen Solution
+1. Rewrote `CurriculumService.js` to parse JSON files dynamically on demands, checking for missing or malformed structures.
+2. Built a regex-based infrastructure day filter mapping `/docker|kubernetes|k8s|deployment|infrastructure|ci\/cd|terraform/i` to avoid DevOps topics for non-technical profiles without hardcoding.
+3. Added try/catch filters in Route handlers mapping HTTP 500 error messages when JSON parses fail.
+4. Rendered candidates cards dynamically using `candidateList.length` loops in the frontend SPA client.
+
+### Files Created or Modified
+*   `src/services/CurriculumService.js`
+*   `src/routes/interviewRoutes.js`
+*   `README.md`
+
+### Verification & Testing
+Designed `scratch/test_dynamic_loading.js` which backs up candidates and curriculum files, appends candidate `Emily TestCandidate`, appends custom Day 32 to curriculum.json, asserts discovery, verifies role-based DevOps exclusions, and restores backups cleanly. All assertions passed.
+
+---
+
+## Entry M41-Deployment-Readiness-Audit
+
+*   **Milestone**: `M41-Deployment-Readiness-Audit`
+*   **Date**: 2026-08-09
+*   **Time**: 13:40:00
+*   **Current Branch**: `main`
+
+### Problem
+Verify and configure deployment readiness settings to prepare the platform for cloud/container deployment. This includes configuring production start scripts, binding IP addresses correctly, checking git ignore specifications, and verifying API configurations.
+
+### Why This Problem Matters
+Hackathon deployments must run in various container environments (e.g. AWS ECS, GCP Cloud Run, Docker Compose). Explicit binds, correct npm scripts, and environment setups prevent connection errors and security leak issues during remote evaluations.
+
+### Chosen Solution
+1. Added `"start": "node server.js"` scripts inside `package.json` to define production starts.
+2. Updated `.gitignore` to resolve invalid backslash escape warnings.
+3. Explicitly bound the Express listener to `'0.0.0.0'` in `server.js`.
+4. Verified relative API calls, permissive CORS configs, environment key loadings, and runtime JSON structures.
+
+### Files Created or Modified
+*   `package.json`
+*   `server.js`
+*   `.gitignore`
+
+### Verification & Testing
+Executed `npm start` booting the local server successfully on port 3000. Verified E2E in browser that relative endpoint calls resolved correctly, candidates selections load data dynamically, and the dialogue loops transition properly.
+
+---
+
+## Entry M42-LLM-Provider-Alignment
+
+*   **Milestone**: `M42-LLM-Provider-Alignment`
+*   **Date**: 2026-08-09
+*   **Time**: 13:55:00
+*   **Current Branch**: `main`
+
+### Problem
+Align the default provider fallback settings to target Groq (`llama-3.3-70b-versatile`) dynamically instead of Gemini, ensuring that initial loads fallback correctly when the environment variables omit `LLM_PROVIDER`, and dynamically update frontend status badges indicating which engine is currently connected.
+
+### Why This Problem Matters
+Hackathon deployments must display the correct active AI engine (e.g. Groq Connected or Gemini Connected) depending on provider selections, avoiding hardcoded status labels and matching actual API traffic.
+
+### Chosen Solution
+1. Updated `LLMService.js` constructor fallback to default to `groq` and model setting to `llama-3.3-70b-versatile`.
+2. Passed the active `provider` string parameter in `InterviewService.js` response payloads and `InterviewController.js` session states.
+3. Dynamically rendered the status indicator label in the frontend (`public/app.js`) using `🟢 ${providerName} Connected`.
+
+### Files Created or Modified
+*   `src/services/LLMService.js`
+*   `src/services/InterviewService.js`
+*   `src/controllers/InterviewController.js`
+*   `public/app.js`
+
+### Verification & Testing
+Ran automated API test suites (`test_api.js` and `test_edge_cases.js`) verifying they return correct provider properties. Confirmed E2E in browser that the badge dynamically displays `🟢 Groq Connected`.
+
 
 

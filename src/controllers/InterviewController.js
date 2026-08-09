@@ -9,11 +9,12 @@ class InterviewController {
    */
   async handleInterviewTurn(req, res) {
     try {
-      const { interviewId, message, candidate } = req.body;
+      const interviewId = req.body.interviewId || req.body.sessionId;
+      const { message, candidate } = req.body;
 
       // 1. Validation checks
       if (!interviewId || typeof interviewId !== 'string' || !interviewId.trim()) {
-        return res.status(400).json({ error: "Missing or invalid 'interviewId'." });
+        return res.status(400).json({ error: "Missing or invalid 'interviewId' or 'sessionId'." });
       }
 
       // Must have either a candidate (to initialize) or a message (to converse)
@@ -77,7 +78,9 @@ class InterviewController {
         statusDetail: session.interviewState ? session.interviewState.statusDetail : null,
         difficulty: session.interviewState ? session.interviewState.difficulty : 'intermediate',
         done: session.status === 'COMPLETED',
-        feedback: session.feedback
+        feedback: session.feedback,
+        mockMode: this.interviewService.llmService.fallbackActive || !this.interviewService.llmService.apiKey,
+        provider: this.interviewService.llmService.provider
       });
     } catch (err) {
       console.error(`[InterviewController] Error fetching session: ${err.message}`);

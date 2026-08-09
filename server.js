@@ -51,8 +51,8 @@ app.get('/api/health', (req, res) => {
 const interviewRoutes = require('./src/routes/interviewRoutes');
 app.use('/api', interviewRoutes);
 
-// Start the Express listener
-const server = app.listen(PORT, () => {
+// Start the Express listener explicitly binding to 0.0.0.0
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(`🚀 AI Interview Agent boot completed.`);
   console.log(`📍 Port: ${PORT}`);
