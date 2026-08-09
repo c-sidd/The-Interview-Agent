@@ -1,6 +1,50 @@
-# AI Usage Log & Prompt History — The Interview Agent
+# AI Usage Log & Prompt History — AI Interview Agent
 
-This document lists the chronological prompts used to build, refine, and verify the AI Interview Agent. It serves as an authenticity trail for Stage 2 Hackathon reviews, documenting the developer's instructions to the AI coding assistant (Antigravity).
+This document records the AI-assisted development process used to build
+the AI Interview Agent for the ABTalks Vibe Coding Hackathon.
+
+The log is intended to provide an authentic development trail for the
+hackathon's Stage 2 Authenticity Review.
+
+## How to Read This Log
+
+Two types of prompt records are used:
+
+### Exact Prompt
+
+The original prompt text is available and is reproduced as accurately
+as possible.
+
+### Reconstructed Summary
+
+The original prompt text is not available in the surviving development
+record. In these cases, the entry is a reconstruction based on actual
+project files, engineering logs, implementation changes, tests, and
+development milestones.
+
+Reconstructed summaries are explicitly labelled and should NOT be
+treated as verbatim historical transcripts.
+
+No fabricated timestamps, prompts, errors, features, or development
+events are intentionally added to this log.
+
+## Development Style
+
+The project was developed iteratively with AI assistance.
+
+The general workflow was:
+
+Problem identified
+→ AI-assisted investigation
+→ implementation
+→ human review
+→ testing
+→ bug discovery
+→ refinement
+→ validation
+
+The developer retained responsibility for deciding which generated
+changes were accepted, modified, rejected, and tested.
 
 ---
 
