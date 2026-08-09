@@ -46,6 +46,18 @@ Problem identified
 The developer retained responsibility for deciding which generated
 changes were accepted, modified, rejected, and tested.
 
+## LLM Provider Evolution
+
+During development, the platform evolved its active LLM provider strategy to maintain reliability:
+
+Gemini considered/used (Phase B & C initialization)
+      ↓
+API credit limitation / Rate limits on Google AI Studio keys
+      ↓
+Groq selected as a high-throughput alternative (Phase E & F integration)
+      ↓
+Groq (llama-3.3-70b-versatile) configured as the default active production provider
+
 ---
 
 ## Phase A — Discovery & Planning
